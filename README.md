@@ -42,7 +42,11 @@ You must define these elements:
     - 3 = only unringing
   - ```-r```: Region of interest (ROI) analysis [default = 1]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
-    - 1 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz```
+    - 1 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz```:
+      - ```L_SCR.nii.gz``` LEFT PROJECTION FIBERS (superior corona radiata)
+      - ```R_SCR.nii.gz``` RIGHT PROJECTION FIBERS (superior corona radiata)
+      - ```L_SLF.nii.gz``` LEFT ASSOCIATION FIBERS (superior longitudinal fasciculus)
+      - ```R_SLF.nii.gz``` RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)
     - alternatively, the user can specify a list of 4 custom ROIs (```NIfTI``` binary masks), which MUST be in the following order: 
       1. ```LEFT``` PROJECTION FIBERS (superior corona radiata)
       2. ```RIGHT``` PROJECTION FIBERS (superior corona radiata)
