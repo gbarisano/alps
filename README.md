@@ -1,9 +1,12 @@
 # alps.sh
 
-This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```). 
-The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)
+This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
+The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
+If you use this script, please cite our work: 
 
-## Index
+If you have any question, please contact me: barisano at stanford.edu.
+
+## Table of contents
 - [Required libraries](#required-libraries)
 - [Required inputs](#required-inputs)
 - [Optional inputs](#optional-inputs)
