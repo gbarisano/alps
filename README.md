@@ -8,6 +8,7 @@ The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiolog
 - [Required inputs](#required-inputs)
 - [Optional inputs](#optional-inputs)
 - [Optional arguments](#optional-arguments)
+- [Outputs](#outputs)
 - [Examples of usage](#examples-of-usage)
 
 ## Required libraries
