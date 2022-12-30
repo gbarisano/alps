@@ -79,6 +79,8 @@ The last column named ```alps``` is the average of the ALPS index on the left an
 - Eddy current correction outputs: these files' name starts with ```eddy_corrected_data.```
 - TOPUP correction outputs: ```my_hifi_b0.nii.gz``` (the new B0 image corrected for susceptibility-induced distortions) and ```my_topup_results_fieldcoef.nii.gz``` (what topup thinks the off-resonance field looks like).
 
+IMPORTANT: If Eddu current correction outputs are not present in the output folder, it means that the DTI fitting has been performed on preprocessed (denoised and/or unringed) input(s) OR on raw dwi input(s) if preprocessed data are not present in the output folder. If TOPUP correction outputs are not present in the output folder, it means that NO TOPUP correction has been applied (see the log for understanding the reason why).
+
 ## Examples of usage
 
 ### 1. ALPS analysis with 1 ```dwi``` input.
