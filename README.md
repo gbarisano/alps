@@ -15,7 +15,7 @@ If you have any question, please contact me: barisano at stanford.edu.
 - [Examples of usage](#examples-of-usage)
 
 ## Required libraries
-- FSL v. 6.0.3 or newer (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation)
+- FSL v. 6.0.3 or newer (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) (it should work with older versions of FSL, but you might need to get the b02b0_1.cnf configuration file from newer FSL versions. This configuration file is needed in case your dwi input has odd number of slices)
 - MRtrix3 (https://www.mrtrix.org/download) (only needed for preprocessing steps)
 
 This script assumes that FSL and MRtrix3 are in your $PATH.
@@ -28,7 +28,7 @@ You must define these elements (except when ```-s 1```, read [Optional arguments
 - ```-c```: ```bvec``` file
 - ```-m```: BIDS sidecar ```json``` file including the metadata of the input ```dwi``` (not required, but HIGHLY RECOMMENDED)  
 If you provide this file, then the script will try to perform eddy correction based on the acquisition parameters reported in the ```json``` file. The DTI fitting will use the eddy corrected data as input.
-  If you do not provide this file, then no eddy correction will be performed, and the DTI fitting will be performed on the raw ```dwi``` input or the preprocessed ```dwi``` input (if preprocessing is enabled).  
+  If you do not provide this file, then NO eddy correction will be performed, and the DTI fitting will be performed on the raw ```dwi``` input or the preprocessed ```dwi``` input (if preprocessing is enabled).  
   The script has been tested with ```json``` files generated from ```dcm2niix``` (https://github.com/rordenlab/dcm2niix)
 
 ## Optional inputs
@@ -47,6 +47,10 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 1 [default] = both denoising and unringing
     - 2 = only denoising
     - 3 = only unringing
+  - ```-e```: determines which EDDY program to use [default = 1]
+    - 0 = skip eddy correction (not recommended) (this is the same as running ```alps.sh``` without specifying the ```json``` file with the ```-m``` option, but using only the inputs ```-a```, ```-b```, and ```-c```); 
+    - 1 [default] = try to use ```eddy_openmp```, and if not available will try to use ```eddy```; 
+    - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ${FSLDIR}/bin/
   - ```-r```: Region of interest (ROI) analysis [default = 1]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
     - 1 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz```:
