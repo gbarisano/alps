@@ -49,7 +49,7 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 3 = only unringing
   - ```-e```: determines which EDDY program to use [default = 1]
     - 0 = skip eddy correction (not recommended) (this is the same as running ```alps.sh``` without specifying the ```json``` file with the ```-m``` option, but using only the inputs ```-a```, ```-b```, and ```-c```); 
-    - 1 [default] = try to use ```${FSLDIR}/bin/eddy_openmp```, and if not available will try to use ```${FSLDIR}/bin/eddy```; 
+    - 1 [default] = try to use ```${FSLDIR}/bin/eddy_openmp``` (should take 1-to-2 hours to run, for most inputs), and if not available will try to use ```${FSLDIR}/bin/eddy``` (should take ~7 hours); 
     - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ```${FSLDIR}/bin/``` (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file).
   - ```-r```: Region of interest (ROI) analysis [default = 1]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
