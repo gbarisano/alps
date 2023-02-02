@@ -208,14 +208,18 @@ if [ $skip -eq 0 ]; then
 	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY
 	if [ -f "${json1}" ] || [ "${eddy}" != "0" ]; then
 		# ACQUISITION PARAMETERS OF FIRST INPUT (REQUIRED FOR EDDY)
-		scanner1=$(jq -r '.Manufacturer' "$json1") # -r gives you the raw output
+		#scanner1=$(jq -r '.Manufacturer' "$json1") # -r gives you the raw output
+		scanner1=$(cat "${json1}" | grep -w Manufacturer | cut -d ' ' -f2 | tr -d ',')
 		if [[ "$scanner1" == *"Philips"* ]]
 		then
-			PEdir1=$(jq -r '.PhaseEncodingAxis' "$json1")
+			#PEdir1=$(jq -r '.PhaseEncodingAxis' "$json1")
+			PEdir1=$(cat "${json1}" | grep -w PhaseEncodingAxis | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
 			TotalReadoutTime1=0.1 #this assumes that the readout time is identical for all acquisitions on the Philips scanner. A "realistic" read-out time is ~50-100ms (and eddy accepts 10-200ms). So use 0.1 (i.e., 100 ms), not 1.
 		else
-			PEdir1=$(jq -r '.PhaseEncodingDirection' "$json1")
-			TotalReadoutTime1=$(jq -r '.TotalReadoutTime' "$json1")
+			#PEdir1=$(jq -r '.PhaseEncodingDirection' "$json1")
+			#TotalReadoutTime1=$(jq -r '.TotalReadoutTime' "$json1")
+			PEdir1=$(cat "${json1}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
+			TotalReadoutTime1=$(cat "${json1}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
 		fi
 		if [ "$PEdir1" = i ]; then printf "1 0 0 $TotalReadoutTime1" > "${outdir}/acqparams.txt";
 		elif [ "$PEdir1" = i- ]; then printf "-1 0 0 $TotalReadoutTime1" > "${outdir}/acqparams.txt";
@@ -247,14 +251,18 @@ if [ $skip -eq 0 ]; then
 			fi
 			
 			##
-			scanner2=$(jq -r '.Manufacturer' "$json2")
+			#scanner2=$(jq -r '.Manufacturer' "$json2")
+			scanner2=$(cat "${json2}" | grep -w Manufacturer | cut -d ' ' -f2 | tr -d ',')
 			if [[ "$scanner2" == *"Philips"* ]]
 			then
-				PEdir2=$(jq -r '.PhaseEncodingAxis' "$json2")- #added "-" to make it opposite to the PEdir1. #Philips scans json files generated with dcm2niix have a problem where the PEdirection is the same (j) even though it is not.
+				#PEdir2=$(jq -r '.PhaseEncodingAxis' "$json2")- #added "-" to make it opposite to the PEdir1. #Philips scans json files generated with dcm2niix have a problem where the PEdirection is the same (j) even though it is not.
+				PEdir2=$(cat "${json2}" | grep -w PhaseEncodingAxis | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
 				TotalReadoutTime2=0.1 #this assumes that the readout time is identical for all acquisitions on the Philips scanner. A "realistic" read-out time is ~50-100ms (and eddy accepts 10-200ms). So use 0.1 (i.e., 100 ms), not 1.
 			else
-				PEdir2=$(jq -r '.PhaseEncodingDirection' "$json2")
-				TotalReadoutTime2=$(jq -r '.TotalReadoutTime' "$json2")
+				#PEdir2=$(jq -r '.PhaseEncodingDirection' "$json2")
+				#TotalReadoutTime2=$(jq -r '.TotalReadoutTime' "$json2")
+				PEdir2=$(cat "${json2}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
+				TotalReadoutTime2=$(cat "${json2}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
 			fi
 
 			# ACQUISITION PARAMETERS (ADDED TO THE PREVIOUS FILE)
