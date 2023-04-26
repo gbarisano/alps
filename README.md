@@ -2,7 +2,9 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
-If you use this script, please cite our work: 
+If you use this script, please cite our work AND report the link to this repository: 
+- Paper: Liu, X, Barisano, G, et al., Cross-Vendor Test-Retest Validation of Diffusion Tensor Image Analysis along the Perivascular Space (DTI-ALPS) for Evaluating Glymphatic System Function, Aging and Disease (2023)
+- Link to this repository: https://github.com/gbarisano/alps/
 
 If you have any question, please contact me: barisano at stanford.edu.
 
