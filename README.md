@@ -71,9 +71,9 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 0 = performs the analysis in NATIVE space. A list of 4 custom ROIs in NATIVE space must be specified with the ```-r``` option.
     - 1 [default] = ```JHU-ICBM-FA-1mm.nii.gz``` (if no structural MRI data input), ```MNI_T1_1mm_brain.nii.gz``` (if structural data input is a T1) or ```JHU-ICBM-T2-1mm.nii.gz``` (if structural data input is a T2) in FSLDIR will be used as template.
     - alternatively, the user can specify a ```NIfTI``` file to be used as a template. The ROIs must be in the same space of this template. The DTI maps will be registered to this template.
-	- ```-v```: VOLUMETRIC structural MRI data (a T1w or T2w NIfTI ```nii.gz``` file) to be used for registration of the FA map to the template
-	- ```-h```: weight of the structural MRI data (1=T1-weighted [default], 2=T2-weighted, no PD, no FLAIR)
-	- ```-w```: WARP, type of registration (option needed only when the analysis is done in the template space AND a structural MRI data is NOT provided; option -w is ignored when a structural MRI is used (-v is not empty).
+- ```-v```: VOLUMETRIC structural MRI data (a T1w or T2w NIfTI ```nii.gz``` file) to be used for registration of the FA map to the template
+- ```-h```: weight of the structural MRI data (1=T1-weighted [default], 2=T2-weighted, no PD, no FLAIR)
+- ```-w```: WARP, type of registration (option needed only when the analysis is done in the template space AND a structural MRI data is NOT provided; option -w is ignored when a structural MRI is used (-v is not empty).
     - 0 [default] = perform linear registration of the reconstructed FA map to the template
     - 1 = perform ONLY non-linear registration (warping) of the reconstructed FA map to the template using FSL's suggested default parameters (not recommended).
     - 2 = perform linear (flirt) + non-linear registration (fnirt)
