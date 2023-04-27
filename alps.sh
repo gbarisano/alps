@@ -2,7 +2,6 @@
 
 #############################################################
 # Giuseppe Barisano - barisano@stanford.edu
-# Xiaodan Liu - xiaodan.liu@ucsf.edu
 #############################################################
 
 ##### Computing diffusion along perivascular spaces (ALPS) from diffusion-weighted images #####
@@ -36,7 +35,7 @@ denoise=1 # perform the denoise and unringing
 rois=1 # perform the ROI analysis using the provided ROIs drawn on JHU-ICBM-FA-1mm.nii.gz
 template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as template
 skip=0 #perform all the steps of the pipeline. 
-eddy=1 #try to use eddy_openmp, and if not available will try to use eddy. 
+eddy=1 #try to use eddy_openmp
 
 print_usage() {
   printf "\nUsage: alps.sh \n\
@@ -56,7 +55,8 @@ print_usage() {
 -o OUTPUT_DIR_NAME \n"
   printf "\nDefault values: \n\
 	-d DENOISING [default = 1];  0=skip; 1=both denoise and unringing; 2=only denoise; 3=only unringing. \n\
-	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=try to use ${FSLDIR}/bin/eddy_openmp, and if not available will try to use ${FSLDIR}/bin/eddy; alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file)\n\
+	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=use ${FSLDIR}/bin/eddy_openmp; 2=use ${FSLDIR}/bin/eddy; 3=use ${FSLDIR}/bin/eddy_correct; 
+				alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file)\n\
 	-r ROIS [default = 1]; 0=skip ROI analysis; 1=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
 		alternatively, a comma-separated list of 4 custom ROI nifti files can be specified.
 		ROIs need to be in the following order: 1) LEFT and 2) RIGHT PROJECTION FIBERS (superior corona radiata), 3) LEFT and 4) RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)\n\
@@ -142,7 +142,10 @@ if [ "$rois" != "0" ]; then
 fi
 	#OPTIONS
 if [ $denoise -ne 0 ] && [ $denoise -ne 1 ] && [ $denoise -ne 2 ] && [ $denoise -ne 3 ]; then echo "-d option is equal to $denoise, which is not an allowed option. -d must be equal to 0, 1, 2, or 3, or skipped (which corresponds to -d 1)."; print_usage; exit 1; fi;
-if [ $eddy -ne 0 ] && [ $eddy -ne 1 ] && [ ! -f "${FSLDIR}/bin/$eddy" ]; then echo "-e option (eddy) is equal to $eddy, but ${FSLDIR}/bin/$eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) or 1 (use eddy_openmp if available, or eddy if not), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ $eddy -eq 1 ] && [ ! -f "${FSLDIR}/bin/eddy_openmp" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_openmp, but ${FSLDIR}/bin/eddy_openmp cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ $eddy -eq 2 ] && [ ! -f "${FSLDIR}/bin/eddy" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy, but ${FSLDIR}/bin/eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ $eddy -eq 3 ] && [ ! -f "${FSLDIR}/bin/eddy_correct" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_correct, but ${FSLDIR}/bin/eddy_correct cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ $eddy -ne 0 ] && [ $eddy -ne 1 ] && [ $eddy -ne 2 ] && [ $eddy -ne 3 ] && [ ! -f "${FSLDIR}/bin/$eddy" ]; then echo "-e option (eddy) is equal to $eddy, but ${FSLDIR}/bin/$eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) or 1 (use eddy_openmp if available, or eddy if not), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
 if [ $skip -ne 0 ] && [ $skip -ne 1 ]; then echo "-s option is equal to $skip, which is not an allowed option. -s must be equal to 0 or 1, or skipped (default value = 0)."; print_usage; exit 1; fi;
 
 
@@ -326,15 +329,15 @@ if [ $skip -eq 0 ]; then
 				indx=""
 				for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 				echo $indx > index.txt
-				if [ $eddy == "1" ]; then echo "Eddy with default option";
-					if [ -f ${FSLDIR}/bin/eddy_openmp ]; then echo "Found eddy_openmp! Running eddy_openmp"
-						eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
-					else
-						if [ -f ${FSLDIR}/bin/eddy ]; then echo "Found eddy (not eddy_openmp)! Running eddy"
-							eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
-						else echo "ERROR! Could not find eddy_openmp nor eddy! Eddy correction will be skipped, which is not recommended. dtifit will use raw or preprocessed dwi data (if available) as input." 
-						fi
-					fi
+				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
+					echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
+					eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+				elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
+					echo "Running ${FSLDIR}/bin/eddy with default options";
+					eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+				elif [ $eddy == "3" ] && [ -f ${FSLDIR}/bin/eddy_correct ]; then 
+					echo "Running ${FSLDIR}/bin/eddy_correct with default options";
+					eddy_correct "$dwi1_processed" eddy_corrected_data 0 trilinear
 				else echo "Eddy with user-specified eddy program ${FSLDIR}/bin/$eddy"
 					"${FSLDIR}/bin/$eddy" --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
 				fi
@@ -349,15 +352,15 @@ if [ $skip -eq 0 ]; then
 				indx=""
 				for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 				echo $indx > index.txt
-				if [ $eddy == "1" ]; then echo "Eddy with default option";
-					if [ -f ${FSLDIR}/bin/eddy_openmp ]; then echo "Found eddy_openmp! Running eddy_openmp"
-						eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
-					else
-						if [ -f ${FSLDIR}/bin/eddy ]; then echo "Found eddy (not eddy_openmp)! Running eddy"
-							eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
-						else echo "ERROR! Could not find eddy_openmp nor eddy! Eddy correction will be skipped, which is not recommended. dtifit will use raw or preprocessed dwi data (if available) as input." 
-						fi
-					fi
+				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
+						echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
+						eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+				elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
+						echo "Running ${FSLDIR}/bin/eddy with default options";
+						eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+				elif [ $eddy == "3" ] && [ -f ${FSLDIR}/bin/eddy_correct ]; then 
+						echo "Running ${FSLDIR}/bin/eddy_correct with default options";
+						eddy_correct "$dwi1_processed" eddy_corrected_data 0 trilinear
 				else echo "Eddy with user-specified eddy program ${FSLDIR}/bin/$eddy"
 					"${FSLDIR}/bin/$eddy" --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
 				fi
@@ -373,15 +376,15 @@ if [ $skip -eq 0 ]; then
 			indx=""
 			for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 			echo $indx > index.txt
-			if [ $eddy == "1" ]; then echo "Eddy with default option";
-				if [ -f ${FSLDIR}/bin/eddy_openmp ]; then echo "Found eddy_openmp! Running eddy_openmp"
-						eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
-				else
-					if [ -f ${FSLDIR}/bin/eddy ]; then echo "Found eddy (not eddy_openmp)! Running eddy"
-						eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
-					else echo "ERROR! Could not find eddy_openmp nor eddy! Eddy correction will be skipped, which is not recommended. dtifit will use raw or preprocessed dwi data (if available) as input." 
-					fi
-				fi
+			if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
+					echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
+					eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+			elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
+					echo "Running ${FSLDIR}/bin/eddy with default options";
+					eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+			elif [ $eddy == "3" ] && [ -f ${FSLDIR}/bin/eddy_correct ]; then 
+					echo "Running ${FSLDIR}/bin/eddy_correct with default options";
+					eddy_correct "$dwi1_processed" eddy_corrected_data 0 trilinear
 			else echo "Eddy with user-specified eddy program ${FSLDIR}/bin/$eddy"
 				"${FSLDIR}/bin/$eddy" --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
 			fi
