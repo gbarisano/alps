@@ -144,7 +144,7 @@ if [ "$rois" != "0" ]; then
 	if [ ! -f "${assoc_R}" ]; then echo "ERROR! Cannot find the following ROI file: ${assoc_R}"; exit 1; fi;
 	if [ "$template" != "0" ]; then #analysis in template space. Double check that the template exists.
 		#conditional for existence of structural MRI data.
-		if [ ! -z $struct ]; then
+		if [ ! -z $struct ]; then
 			if [ ! -f "$struct" ]; then echo "ERROR! User specified to use $struct as structural MRI data, but I could not find it. Please double-check that the file exists."; exit 1; fi;
 		fi
 		#conditional for template selection
