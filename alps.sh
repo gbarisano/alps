@@ -208,8 +208,8 @@ if [ $skip -eq 0 ]; then
 		echo "Denoising and unringing skipped by the user (-d 0 option)"
 	fi
 
-	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY
-	if [ -f "${json1}" ] || [ "${eddy}" != "0" ]; then
+	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY with eddy_openmp
+	if [ -f "${json1}" ]; then
 		# ACQUISITION PARAMETERS OF FIRST INPUT (REQUIRED FOR EDDY)
 		#scanner1=$(jq -r '.Manufacturer' "$json1") # -r gives you the raw output
 		scanner1=$(cat "${json1}" | grep -w Manufacturer | cut -d ' ' -f2 | tr -d ',')
@@ -389,6 +389,9 @@ if [ $skip -eq 0 ]; then
 				"${FSLDIR}/bin/$eddy" --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
 			fi
 		fi
+	elif [ ! -f "${json1}" ] && [ $eddy == "3" ]; then
+		echo "Running ${FSLDIR}/bin/eddy_correct with default options";
+		eddy_correct "$dwi1_processed" eddy_corrected_data 0 trilinear
 	fi
 
 
