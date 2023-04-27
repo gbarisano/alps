@@ -77,11 +77,11 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 0 [default] = perform linear registration of the reconstructed FA map to the template
     - 1 = perform ONLY non-linear registration (warping) of the reconstructed FA map to the template using FSL's suggested default parameters (not recommended).
     - 2 = perform linear (flirt) + non-linear registration (fnirt)
-  - ```-o```: name of the output folder. If not specified, the default output folder will be called 'alps' and will be located in the same folder of the (first) input.
-  - ```-s```: Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 
-    - 0 [default] = all the steps are performed; 
-    - 1 = ONLY ROI analysis is performed;  
- If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED.  
+- ```-o```: name of the output folder. If not specified, the default output folder will be called 'alps' and will be located in the same folder of the (first) input.
+- ```-s```: Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 
+  - 0 [default] = all the steps are performed; 
+  - 1 = ONLY ROI analysis is performed;  
+If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED. 
  This option is useful for example when the user wants to perform the ROI analysis in NATIVE space with custom ROIs drawn on the output of the DTI processing steps (dti_FA.nii.gz) (see [Example 4](#4-alps-analysis-with-1-dwi-input-in-native-space--t-0-after-drawing-rois-on-the-output-dti_faniigz)). In this case, the user can run the ```alps``` script twice: the first time skipping the ROI analysis (```-r 0``` option), then draw the ROIs on the dti_FA.nii.gz output, and then re-run the ```alps``` script with the options ```-s 1```, ```-r myroi1.nii.gz,myroi2.nii.gz,myroi3.nii.gz,myroi4.nii.gz``` and ```-o outputdirectory``` (where "outputdirectory" is the directory where dti_FA.nii.gz and the other tensor files are located).  
  If you want to include the ```id``` name in the output csv file with the ALPS index, include the ```-a``` option with the ID you want to use (e.g., ```-a myID```; if ```-a``` is a ```.nii``` or ```.nii.gz``` file, then the file extension will be excluded from the ID name: ```-a mynifti.nii.gz``` will result in ID ```mynifti```).
   
