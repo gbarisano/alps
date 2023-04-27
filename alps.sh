@@ -62,7 +62,7 @@ print_usage() {
   printf "\nDefault values: \n\
 	-d DENOISING [default = 1];  0=skip; 1=both denoise and unringing; 2=only denoise; 3=only unringing. \n\
 	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=use ${FSLDIR}/bin/eddy_openmp; 2=use ${FSLDIR}/bin/eddy; 3=use ${FSLDIR}/bin/eddy_correct; 
-				alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file)\n\
+				alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include \"${FSLDIR}/bin/\" in the command, just the name of the binary file)\n\
 	-r ROIS [default = 1]; 0=skip ROI analysis; 1=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
 		alternatively, a comma-separated list of 4 custom ROI nifti files can be specified.
 		ROIs need to be in the following order: 1) LEFT and 2) RIGHT PROJECTION FIBERS (superior corona radiata), 3) LEFT and 4) RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)\n\
@@ -74,7 +74,7 @@ print_usage() {
 		2=perform linear (flirt) + non-linear registration (fnirt); option -w is ignored when a structural MRI is used (-v is not empty).
 	-s Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 0 = all the steps are performed; 1= ONLY ROI analysis is performed;
 		If -s 1, then -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED.   \n\
-	-o OUTPUT_DIR_NAME [default = 1]; default option will create a folder called "alps" located in the directory of the (first) input. \n\
+	-o OUTPUT_DIR_NAME [default = 1]; default option will create a folder called \"alps\" located in the directory of the (first) input. \n\
 	\nExample with 1 input: sh alps.sh -a dwi.nii.gz -b id.bval -c id.bvec -m id.json -d 1 -o alps\n\
 	\nExample with 2 inputs with opposite phase encoding direction: sh alps.sh -a dwi_PA.nii.gz -b id_PA.bval -c id_PA.bvec -m id_PA.json -i dwi_AP.nii.gz -j id_AP.bval -k id_AP.bvec -n id_AP.json -d 1 -o alps\n"
 }
@@ -153,11 +153,11 @@ if [ "$rois" != "0" ]; then
 			template_mask="--refmask=${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask_dil.nii.gz "
 			#used only for fnirt (warp > 0 or !-z struct)
 			fi
-			if [ -z $struc ]; then
+			if [ -z $struct ]; then
 				echo "Default FA template will be used: JHU-ICBM-FA-1mm.nii.gz"
 				template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
 				template_abbreviation=JHU-FA
-			elif [ ! -z $struct ]; then
+			elif [ ! -z $struct ]; then
 				if [ $weight == "1" ]; then
 					echo "The structural MRI $struct is a T1-weighted image, therefore the default template that will be used is: MNI152_T1_1mm"
 					template=${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
@@ -204,8 +204,10 @@ echo -e "Running ALPS with the following parameters: \n
 -e $eddy \n
 -r $rois \n
 -t $template \n
--s $skip \n
+-v $struc \n
+-h $weight \n
 -w $warp \n
+-s $skip \n
 -o $output_dir_name"
 
 
@@ -481,7 +483,7 @@ then
 		if [ -f "$struct" ]; then #if you have structural MRI data
 			echo "Linear (flirt) + Non-Linear (fnirt) registration to template via structural scan";
 			cp "$struct" "${outdir}/${smri}.nii.gz"
-			bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain.nii.gz" -m #this is used for flirt dti2struct and flirt struct2template
+			bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain" -m #this is used for flirt dti2struct and flirt struct2template
 			flirt -ref "${outdir}/${smri}_brain.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -omat "${outdir}/dti2struct.mat"
 			flirt -ref "${template}" -in "${outdir}/${smri}_brain.nii.gz" -omat "${outdir}/struct2template_aff.mat"
 			fnirt --in="${outdir}/${smri}.nii.gz" --aff="${outdir}/struct2template_aff.mat" --cout="${outdir}/struct2template_warps" \
