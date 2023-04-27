@@ -33,9 +33,12 @@ json2=''
 # optional inputs with default options
 denoise=1 # perform the denoise and unringing
 rois=1 # perform the ROI analysis using the provided ROIs drawn on JHU-ICBM-FA-1mm.nii.gz
-template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as template
+template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as FA template or FSL's MNI template if the structural MRI data is provided. 
 skip=0 #perform all the steps of the pipeline. 
 eddy=1 #try to use eddy_openmp
+warp=0 #perform linear registration of the FA map to the template.
+struct='' #structural MRI data (can be either a T1-weighted or a T2-weighted image, no FLAIR, no PD)
+weight=1 #if a structural MRI data is provided, by default it will be considered a T1-weighted image.
 
 print_usage() {
   printf "\nUsage: alps.sh \n\
@@ -51,6 +54,9 @@ print_usage() {
 -e EDDY (specify which eddy program to use)
 -r ROIS \n\
 -t TEMPLATE \n\
+-v VOLUMETRIC structural MRI data \n\
+-h WeigHt of the volumetric structural MRI data \n\
+-w WARP the reconstructed FA map to the template \n\
 -s SKIP preprocessing and DTI fitting, i.e. perform ONLY ROI analysis \n\
 -o OUTPUT_DIR_NAME \n"
   printf "\nDefault values: \n\
@@ -60,7 +66,12 @@ print_usage() {
 	-r ROIS [default = 1]; 0=skip ROI analysis; 1=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
 		alternatively, a comma-separated list of 4 custom ROI nifti files can be specified.
 		ROIs need to be in the following order: 1) LEFT and 2) RIGHT PROJECTION FIBERS (superior corona radiata), 3) LEFT and 4) RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)\n\
-	-t TEMPLATE [default = 1]; 0=ROI analysis in NATIVE space; 1=ROI analysis with FSL's JHU-ICBM-FA-1mm; alternatively, the user can specify a template to use. \n\
+	-t TEMPLATE [default = 1]; 0=ROI analysis in NATIVE space; 1=ROI analysis with FSL's JHU-ICBM-FA-1mm (if no structural MRI data input), MNI_T1_1mm (if structural data input is a T1) or JHU-ICBM-T2-1mm (if structural data input is a T2); \n\
+		alternatively, the user can specify a template to use. \n\
+	-v VOLUMETRIC structural MRI data: specify a structural MRI data (a T1w or T2w NIFTI file) to be used for registration of the FA map to the template;
+	-h weight of the structural MRI data [default = 1]; 1=T1-weighted image; 2=T2-weighted image (no PD, no FLAIR).
+	-w WARP [default = 0]; 0=perform linear registration of the reconstructed FA map to the template; 1=perform ONLY non-linear registration (warping) of the reconstructed FA map to the template using FSL's suggested default parameters (not recommended). \n\
+		2=perform linear (flirt) + non-linear registration (fnirt); option -w is ignored when a structural MRI is used (-v is not empty).
 	-s Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 0 = all the steps are performed; 1= ONLY ROI analysis is performed;
 		If -s 1, then -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED.   \n\
 	-o OUTPUT_DIR_NAME [default = 1]; default option will create a folder called "alps" located in the directory of the (first) input. \n\
@@ -68,7 +79,7 @@ print_usage() {
 	\nExample with 2 inputs with opposite phase encoding direction: sh alps.sh -a dwi_PA.nii.gz -b id_PA.bval -c id_PA.bvec -m id_PA.json -i dwi_AP.nii.gz -j id_AP.bval -k id_AP.bvec -n id_AP.json -d 1 -o alps\n"
 }
 
-while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:s:o:' flag; do
+while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:v:h:w:s:o:' flag; do
   case "${flag}" in
     a) dwi1="${OPTARG}" ;;
     b) bval1="${OPTARG}" ;;
@@ -82,6 +93,9 @@ while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:s:o:' flag; do
 		e) eddy="${OPTARG}" ;;
 		r) rois="${OPTARG}" ;;
 		t) template="${OPTARG}" ;;
+		v) struct="${OPTARG}" ;;
+		h) weight="${OPTARG}" ;;
+		w) warp="${OPTARG}" ;;
 		s) skip="${OPTARG}" ;;
 		o) output_dir_name="${OPTARG}" ;;
     *) print_usage
@@ -129,15 +143,42 @@ if [ "$rois" != "0" ]; then
 	if [ ! -f "${assoc_L}" ]; then echo "ERROR! Cannot find the following ROI file: ${assoc_L}"; exit 1; fi;
 	if [ ! -f "${assoc_R}" ]; then echo "ERROR! Cannot find the following ROI file: ${assoc_R}"; exit 1; fi;
 	if [ "$template" != "0" ]; then #analysis in template space. Double check that the template exists.
+		#conditional for existence of structural MRI data.
+		if [ ! -z $struct ]; then
+			if [ ! -f "$struct" ]; then echo "ERROR! User specified to use $struct as structural MRI data, but I could not find it. Please double-check that the file exists."; exit 1; fi;
+		fi
+		#conditional for template selection
 		if [ "$template" == "1" ]; then
-			echo "Default template will be used: JHU-ICBM-FA-1mm.nii.gz"
-			template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
-			template_abbreviation=JHU-FA
+			if [ -f ${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask_dil.nii.gz ]; then
+			template_mask="--refmask=${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask_dil.nii.gz "
+			#used only for fnirt (warp > 0 or !-z struct)
+			fi
+			if [ -z $struc ]; then
+				echo "Default FA template will be used: JHU-ICBM-FA-1mm.nii.gz"
+				template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
+				template_abbreviation=JHU-FA
+			elif [ ! -z $struct ]; then
+				if [ $weight == "1" ]; then
+					echo "The structural MRI $struct is a T1-weighted image, therefore the default template that will be used is: MNI152_T1_1mm"
+					template=${FSLDIR}/data/standard/MNI152_T1_1mm_brain.nii.gz
+					template_abbreviation=MNI152_T1_1mm
+					smri="t1w"
+				elif [ $weight == "2" ]; then 
+					echo "The structural MRI $struct is a T2-weighted image, therefore the default template that will be used is: JHU-ICBM-T2-1mm"
+					template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-T2-1mm.nii.gz
+					template_abbreviation=JHU-ICBM-T2-1mm
+					smri="t2w"
+				elif [ $weight -ne 1 ] && [ $weight -ne 2 ] && [ "$template" != "0" ] && [ "$template" != "1" ] ; then
+					echo "ERROR! A structural MRI data has been specified, but the user needs to specify with the option -h whether this is T1-weighted (-h 1) or T2-weighted (-h 2) in order to select a default template. \n\
+					The only allowed option for -h are 1 or 2. Alternatively, the user can specify the file template to use, and the option -h will be ignored."; exit 1; 
+				fi
+			fi
 		else
 			echo "User specified template: $template"
 			template_abbreviation=template
 		fi
 		if [ ! -f "${template}" ]; then echo "ERROR! Cannot find the template "$template". The template file must exist if -t option is not 0."; exit 1; fi;
+		if [ $warp -ne 0 ] && [ $warp -ne 1 ] && [ $warp -ne 2 ]; then echo "ERROR! The option specified with -w is $warp, which is not an allowed option. -w must be equal to 0 (for linear registration) or 1 (for non-linear registration)."; exit 1; fi;
 	fi
 fi
 	#OPTIONS
@@ -164,6 +205,7 @@ echo -e "Running ALPS with the following parameters: \n
 -r $rois \n
 -t $template \n
 -s $skip \n
+-w $warp \n
 -o $output_dir_name"
 
 
@@ -436,10 +478,47 @@ then
 	echo "starting ROI analysis with projection fibers "$(basename "$proj_L")" (LEFT) and "$(basename "$proj_R")" (RIGHT), and association fibers "$(basename "$assoc_L")" (LEFT) and "$(basename "$assoc_R")" (RIGHT)"
 	#TEMPLATE
 	if [ "$template" != "0" ]; then #analysis in template space
-		flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-		flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-		flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-		flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+		if [ -f "$struct" ]; then #if you have structural MRI data
+			echo "Linear (flirt) + Non-Linear (fnirt) registration to template via structural scan";
+			cp "$struct" "${outdir}/${smri}.nii.gz"
+			bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain.nii.gz" -m #this is used for flirt dti2struct and flirt struct2template
+			flirt -ref "${outdir}/${smri}_brain.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -omat "${outdir}/dti2struct.mat"
+			flirt -ref "${template}" -in "${outdir}/${smri}_brain.nii.gz" -omat "${outdir}/struct2template_aff.mat"
+			fnirt --in="${outdir}/${smri}.nii.gz" --aff="${outdir}/struct2template_aff.mat" --cout="${outdir}/struct2template_warps" \
+			--ref="${template}" ${template_mask}--imprefm=1 \
+			--impinm=1 --imprefval=0 --impinval=0 --subsamp=4,4,2,2,1,1 --miter=5,5,5,5,5,10 --infwhm=8,6,5,4.5,3,2 --reffwhm=8,6,5,4,2,0 \
+			--lambda=300,150,100,50,40,30 --estint=1,1,1,1,1,0 --applyrefmask=1,1,1,1,1,1 --applyinmask=1 --warpres=10,10,10 --ssqlambda=1 \
+			--regmod=bending_energy --intmod=global_non_linear_with_bias --intorder=5 --biasres=50,50,50 --biaslambda=10000 --refderiv=0
+			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+		else
+			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
+			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+			flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			elif [ "$warp" == "1" ]; then echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
+			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
+			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
+			--regmod=bending_energy --intmod=global_linear --refderiv=0
+			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+			elif [ "$warp" == "2" ]; then echo "Linear (flirt) + Non-Linear (fnirt) registration to template";
+			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -omat "${outdir}/FA_to_${template_abbreviation}_aff.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--aff="${outdir}/FA_to_${template_abbreviation}_aff.mat" \
+			--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
+			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
+			--regmod=bending_energy --intmod=global_linear --refderiv=0
+			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+			fi
+		fi
 		dxx="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
 		dyy="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
 		dzz="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
