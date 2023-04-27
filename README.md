@@ -128,7 +128,7 @@ The option ```-a my_4D_dwi.nii.gz``` is not required in this latest command, but
 
 This command will perform ONLY eddy current correction on the RAW ```dwi``` input data (not denoised nor unringed), and compute the ALPS index using the provided default ROIs on FSL template ```JHU-ICBM-FA-1mm.nii.gz```. The output folder will be called with the default name "alps" and will be located in the same folder as the input.
 
-### 6. Minimal number of inputs (recommended only if used with eddy current correction ```-e 3```, because otherwise no eddy current correction will be performed).
+### 6. Minimal number of inputs (not recommended if used without the eddy current correction ```-e 3``` option).
 
 ```alps.sh -a my_4D_dwi.nii.gz -b my_bval_file -c my_bvec_file```
 
