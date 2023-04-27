@@ -51,7 +51,9 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 3 = only unringing
   - ```-e```: determines which EDDY program to use [default = 1]
     - 0 = skip eddy correction (not recommended) (this is the same as running ```alps.sh``` without specifying the ```json``` file with the ```-m``` option, but using only the inputs ```-a```, ```-b```, and ```-c```); 
-    - 1 [default] = try to use ```${FSLDIR}/bin/eddy_openmp``` (should take 1-to-2 hours to run, for most inputs), and if not available will try to use ```${FSLDIR}/bin/eddy``` (should take ~7 hours); 
+    - 1 [default] = use ```${FSLDIR}/bin/eddy_openmp``` (should take 1-to-2 hours to run, for most inputs);
+    - 2 = use ```${FSLDIR}/bin/eddy``` (should take ~7 hours to run, for most inputs);
+    - 3 = use  ```${FSLDIR}/bin/eddy_correct``` (does not require a metadata file)
     - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ```${FSLDIR}/bin/``` (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file).
   - ```-r```: Region of interest (ROI) analysis [default = 1]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
@@ -126,11 +128,11 @@ The option ```-a my_4D_dwi.nii.gz``` is not required in this latest command, but
 
 This command will perform ONLY eddy current correction on the RAW ```dwi``` input data (not denoised nor unringed), and compute the ALPS index using the provided default ROIs on FSL template ```JHU-ICBM-FA-1mm.nii.gz```. The output folder will be called with the default name "alps" and will be located in the same folder as the input.
 
-### 6. Minimal number of inputs (not recommended, because no eddy current correction will be performed).
+### 6. Minimal number of inputs (recommended only if used with eddy current correction ```-e 3```, because otherwise no eddy current correction will be performed).
 
 ```alps.sh -a my_4D_dwi.nii.gz -b my_bval_file -c my_bvec_file```
 
-This command will preprocess ```my_4D_dwi.nii.gz``` (denoising and unringing, i.e. default option ```-d```) and compute the ALPS index using the provided default ROIs on FSL template ```JHU-ICBM-FA-1mm.nii.gz```. No eddy current correction will be applied, which is not recommended.
+This command will preprocess ```my_4D_dwi.nii.gz``` (denoising and unringing, i.e. default option ```-d```) and compute the ALPS index using the provided default ROIs on FSL template ```JHU-ICBM-FA-1mm.nii.gz```. Eddy current correction will be applied only if the user specifies the option ```-e 3``` (i.e., using ```${FSLDIR}/bin/eddy_correct```). If ```-e 3``` is not specified, no eddy current correction will be performed, which is not recommended.
 
 
 
