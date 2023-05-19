@@ -216,7 +216,7 @@ if [ $skip -eq 0 ]; then
 	# create output directory and copy bval and bvec files
 	if [ ! $output_dir_name ]; then 
 		#study_folder="$(dirname "${dwi1}")"
-		study_folder=`echo "$(cd "$(dirname -- "$log10")" >/dev/null; pwd -P)"`
+		study_folder=`echo "$(cd "$(dirname -- "${dwi1}")" >/dev/null; pwd -P)"`
 		outdir="${study_folder}/alps"
 	else
 		outdir="${output_dir_name}"
@@ -247,10 +247,10 @@ if [ $skip -eq 0 ]; then
 			echo "Unringing $dwi1"
 			mrdegibbs "$dwi1" "${outdir}/dwi1.unring.nii.gz"
 			dwi1_processed="${outdir}/dwi1.unring.nii.gz"
-			rm "${outdir}/dwi1.nii"
 		fi
 	else
 		echo "Denoising and unringing skipped by the user (-d 0 option)"
+		dwi1_processed="${dwi1}"
 	fi
 
 	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY with eddy_openmp
@@ -286,16 +286,16 @@ if [ $skip -eq 0 ]; then
 				dwidenoise "$dwi2" "${outdir}/dwi2.denoised.nii.gz"
 				mrdegibbs "${outdir}/dwi2.denoised.nii.gz" "${outdir}/dwi2.denoised.unring.nii.gz"
 				dwi2_processed="${outdir}/dwi2.denoised.unring.nii.gz"
-			fi
-			if [ $denoise -eq 2 ]; then
+			elif [ $denoise -eq 2 ]; then
 				echo "Denoising $dwi2"
 				dwidenoise "$dwi2" "${outdir}/dwi2.denoised.nii.gz"
 				dwi2_processed="${outdir}/dwi2.denoised.nii.gz"
-			fi
-			if [ $denoise -eq 3 ]; then
+			elif [ $denoise -eq 3 ]; then
 				echo "Unringing $dwi2"
 				mrdegibbs "$dwi2" "${outdir}/dwi2.unring.nii.gz"
 				dwi2_processed="${outdir}/dwi2.unring.nii.gz"
+			elif [ $denoise -eq 0 ]; then
+				dwi2_processed="${dwi2}"
 			fi
 			
 			##
