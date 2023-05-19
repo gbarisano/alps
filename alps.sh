@@ -215,7 +215,8 @@ echo -e "Running ALPS with the following parameters: \n
 if [ $skip -eq 0 ]; then
 	# create output directory and copy bval and bvec files
 	if [ ! $output_dir_name ]; then 
-		study_folder="$(dirname "${dwi1}")"
+		#study_folder="$(dirname "${dwi1}")"
+		study_folder=`echo "$(cd "$(dirname -- "$log10")" >/dev/null; pwd -P)"`
 		outdir="${study_folder}/alps"
 	else
 		outdir="${output_dir_name}"
