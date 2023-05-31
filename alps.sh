@@ -225,7 +225,7 @@ if [ $skip -eq 0 ]; then
 	if [ -f "${outdir}/alps.stat/alps.csv" ] && [ ! -z "`tail -n 1 "${outdir}/alps.stat/alps.csv" | tr -d ,`" ]; then echo "ERROR! Final output alps.csv already exists and is not empty! Remove/rename the output folder in order to re-run the pipeline with input $dwi1"; exit 1; fi;
 	
 	echo "create output directory: ${outdir}"
-	mkdir "${outdir}"
+	mkdir -p "${outdir}"
 	cp "$bvec1" "${outdir}/bvec1"
 	cp "$bval1" "${outdir}/bval1"
 	cd "${outdir}"
