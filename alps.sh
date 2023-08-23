@@ -113,15 +113,19 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 	if [ ! -f "${bval1}" ]; then echo "ERROR! bval file $bval1 does not exist."; exit 1; fi
 	if [ ! -f "${bvec1}" ]; then echo "ERROR! bvec file $bvec1 does not exist."; exit 1; fi
 	#if [ ! $json1 ]; then echo "ERROR! metadata .json file (-m) is not defined."; print_usage; exit 1; fi
-	if [ $dwi2 ]; then if [ ! $bval2 ] || [ ! $bvec2 ] || [ ! $json2 ]; then echo "ERROR! dwi2 (-i) is defined, but bval (-j), bvec (-k), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
-	if [ $bval2 ]; then if [ ! $dwi2 ] || [ ! $bvec2 ] || [ ! $json2 ]; then echo "ERROR! bval (-j) of the second input is defined, but dwi2 (-i), bvec (-k), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
-	if [ $bvec2 ]; then if [ ! $dwi2 ] || [ ! $bval2 ] || [ ! $json2 ]; then echo "ERROR! bvec (-k) of the second input is defined, but dwi2 (-i), bval (-j), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
-	if [ $json2 ]; then if [ ! $dwi2 ] || [ ! $bval2 ] || [ ! $bvec2 ]; then echo "ERROR! metadata .json file (-n) of the second input is defined, but dwi2 (-i), bval (-j), and/or bvec (-k) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
+ 	#CHECK FOR DWI2. Hashtagged, because: 
+  		#bvec2 is not used, 
+    		#bval2 might be skipped if the user verified that the first volume is a B0 volume
+      		#json2 might be skipped if the user verified that the PE direction is opposite to that of dwi1.
+	#if [ $dwi2 ]; then if [ ! $bval2 ] || [ ! $bvec2 ] || [ ! $json2 ]; then echo "ERROR! dwi2 (-i) is defined, but bval (-j), bvec (-k), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
+	#if [ $bval2 ]; then if [ ! $dwi2 ] || [ ! $bvec2 ] || [ ! $json2 ]; then echo "ERROR! bval (-j) of the second input is defined, but dwi2 (-i), bvec (-k), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
+	#if [ $bvec2 ]; then if [ ! $dwi2 ] || [ ! $bval2 ] || [ ! $json2 ]; then echo "ERROR! bvec (-k) of the second input is defined, but dwi2 (-i), bval (-j), and/or metadata .json file (-n) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
+	#if [ $json2 ]; then if [ ! $dwi2 ] || [ ! $bval2 ] || [ ! $bvec2 ]; then echo "ERROR! metadata .json file (-n) of the second input is defined, but dwi2 (-i), bval (-j), and/or bvec (-k) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
 	if [ $dwi2 ]; then 
 		if [ ! -f "${dwi2}" ]; then echo "ERROR! second input $dwi2 does not exist."; exit 1; fi;
-		if [ ! -f "${bval2}" ]; then echo "ERROR! bval file $bval2 of second input does not exist."; exit 1; fi;
-		if [ ! -f "${bvec2}" ]; then echo "ERROR! bvec file $bvec2 of second input does not exist."; exit 1; fi;
-		if [ ! -f "${json2}" ]; then echo "ERROR! metadata .json file $json2 of second input does not exist."; exit 1; fi;
+		if [ $bval2 ]; then if [ ! -f "${bval2}" ]; then echo "ERROR! bval file $bval2 of second input does not exist."; exit 1; fi; fi;
+		#if [ ! -f "${bvec2}" ]; then echo "ERROR! bvec file $bvec2 of second input does not exist."; exit 1; fi;
+		if [ $json2 ]; then if [ ! -f "${json2}" ]; then echo "ERROR! metadata .json file $json2 of second input does not exist."; exit 1; fi; fi;
 	fi
 fi
 	#ROIS & TEMPLATE
@@ -299,20 +303,27 @@ if [ $skip -eq 0 ]; then
 			fi
 			
 			##
-			#scanner2=$(jq -r '.Manufacturer' "$json2")
-			scanner2=$(cat "${json2}" | grep -w Manufacturer | cut -d ' ' -f2 | tr -d ',')
-			if [[ "$scanner2" == *"Philips"* ]]
-			then
-				#PEdir2=$(jq -r '.PhaseEncodingAxis' "$json2")- #added "-" to make it opposite to the PEdir1. #Philips scans json files generated with dcm2niix have a problem where the PEdirection is the same (j) even though it is not.
-				PEdir2=$(cat "${json2}" | grep -w PhaseEncodingAxis | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
-				TotalReadoutTime2=0.1 #this assumes that the readout time is identical for all acquisitions on the Philips scanner. A "realistic" read-out time is ~50-100ms (and eddy accepts 10-200ms). So use 0.1 (i.e., 100 ms), not 1.
-			else
-				#PEdir2=$(jq -r '.PhaseEncodingDirection' "$json2")
-				#TotalReadoutTime2=$(jq -r '.TotalReadoutTime' "$json2")
-				PEdir2=$(cat "${json2}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
-				TotalReadoutTime2=$(cat "${json2}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
-			fi
-
+   			if [ "$json2" ]; then
+				#scanner2=$(jq -r '.Manufacturer' "$json2")
+				scanner2=$(cat "${json2}" | grep -w Manufacturer | cut -d ' ' -f2 | tr -d ',')
+				if [[ "$scanner2" == *"Philips"* ]]
+				then
+					#PEdir2=$(jq -r '.PhaseEncodingAxis' "$json2")- #added "-" to make it opposite to the PEdir1. #Philips scans json files generated with dcm2niix have a problem where the PEdirection is the same (j) even though it is not.
+					PEdir2=$(cat "${json2}" | grep -w PhaseEncodingAxis | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
+					TotalReadoutTime2=0.1 #this assumes that the readout time is identical for all acquisitions on the Philips scanner. A "realistic" read-out time is ~50-100ms (and eddy accepts 10-200ms). So use 0.1 (i.e., 100 ms), not 1.
+				else
+					#PEdir2=$(jq -r '.PhaseEncodingDirection' "$json2")
+					#TotalReadoutTime2=$(jq -r '.TotalReadoutTime' "$json2")
+					PEdir2=$(cat "${json2}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
+					TotalReadoutTime2=$(cat "${json2}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
+				fi
+    			else #if you don't have a json2 file, then assume that the PEdir2 is opposite to PEdir1 and that the TotalReadoutTime2 is equal to TotalReadoutTime1 
+       				if [[ "${PEdir1}" == *"-"* ]]; then PEdir2=$(echo ${PEdir1} | tr -d '-')
+	   			else PEdir2="${PEdir1}-"
+       				fi
+	   			TotalReadoutTime2=$TotalReadoutTime1
+       			fi
+	
 			# ACQUISITION PARAMETERS (ADDED TO THE PREVIOUS FILE)
 			if [ "$PEdir2" = i ]; then printf "\n1 0 0 $TotalReadoutTime2" >> "${outdir}/acqparams.txt";
 			elif [ "$PEdir2" = i- ]; then printf "\n-1 0 0 $TotalReadoutTime2" >> "${outdir}/acqparams.txt";
@@ -325,7 +336,11 @@ if [ $skip -eq 0 ]; then
 
 			#TOPUP (only if PEdir1 = PEdir2- and both DWI datasets have B0 images as first volume)
 			b0_dwi1=`head -c 1 "$bval1"`
-			b0_dwi2=`head -c 1 "$bval2"`
+			if [ "$bval2" ]; then #if you don't have a bval2 file, then assume it equal to b0_dwi1, that should be 0.
+   				b0_dwi2=`head -c 1 "$bval2"`
+       			else
+	  			b0_dwi2=$b0_dw1
+      			fi
 			if [ "${PEdir1}" == "${PEdir2}-" ] || [ "${PEdir2}" == "${PEdir1}-" ] && ([ "${b0_dwi1}" == "${b0_dwi2}" ] && [ "${b0_dwi1}" == "0" ]);
 			then
 				b0_1="${outdir}/b0_first_direction.nii.gz"
@@ -559,7 +574,8 @@ elif [ "$rois" == "0" ]
 	then echo "ROI analysis skipped by the user.";
 fi
 
-echo "Finito! Please cite ..."
+echo "Finito! Please cite this repository (https://github.com/gbarisano/alps/) and the paper:
+Liu, X, Barisano, G, et al., Cross-Vendor Test-Retest Validation of Diffusion Tensor Image Analysis along the Perivascular Space (DTI-ALPS) for Evaluating Glymphatic System Function, Aging and Disease (2023)"
 
 
 
