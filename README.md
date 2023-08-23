@@ -37,9 +37,9 @@ If you provide this file, then the script will try to perform eddy correction ba
 A second ```dwi``` dataset with opposite phase encoding (PE) direction to correct for susceptibility-induced distortions. 
 To correct for susceptibility-induced distortions, the user must define the following 4 additional inputs:
   - ```-i```: 4D ```NIfTI``` file of the second ```dwi``` input (the first volume must be a B0 image and the PE direction must be opposite to the PE of the first ```dwi``` dataset in order to be used)
-  - ```-j```: ```bval``` file of the second ```dwi``` input
-  - ```-k```: ```bvec``` file of the second ```dwi``` input
-  - ```-n```: BIDS sidecar ```json``` file of the second ```dwi``` input
+  - ```-j```: ```bval``` file of the second ```dwi``` input. If not provided together with the second ```dwi``` input, the first volume of the second ```dwi``` input will be assumed to have b-value equal to that of the first ```dwi``` input.
+  - ```-k```: ```bvec``` file of the second ```dwi``` input. Not needed.
+  - ```-n```: BIDS sidecar ```json``` file of the second ```dwi``` input. If not provided together with the second ```dwi``` input, the PE direction of the second ```dwi``` input will be assumed to be opposite to the PE direction of the first ```dwi``` input.
 
 ## Optional arguments
 
