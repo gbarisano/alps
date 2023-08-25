@@ -208,7 +208,7 @@ echo -e "Running ALPS with the following parameters: \n
 -e $eddy \n
 -r $rois \n
 -t $template \n
--v $struc \n
+-v $struct \n
 -h $weight \n
 -w $warp \n
 -s $skip \n
