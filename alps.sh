@@ -499,8 +499,19 @@ then
 		if [ -f "$struct" ]; then #if you have structural MRI data
 			echo "Linear (flirt) + Non-Linear (fnirt) registration to template via structural scan";
 			cp "$struct" "${outdir}/${smri}.nii.gz"
-			bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain" -m #this is used for flirt dti2struct and flirt struct2template
-			flirt -ref "${outdir}/${smri}_brain.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -omat "${outdir}/dti2struct.mat"
+   			#hashtagged the following 2 lines because bet2 does not work super well in all struct MRI scans.
+			#bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain" -m #this is used for flirt dti2struct and flirt struct2template
+			#flirt -ref "${outdir}/${smri}_brain.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -omat "${outdir}/dti2struct.mat"
+			flirt -ref "${outdir}/${smri}.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -out "${outdir}/dti_FA_2_${smri}.nii.gz" -omat "${outdir}/dti2struct.mat"
+			if [ -f "${outdir}/b0_brain_mask.nii.gz" ]; then
+				flirt -in "${outdir}/b0_brain_mask.nii.gz" -ref "${outdir}/${smri}.nii.gz" -interp nearestneighbour -out "${outdir}/b0_brain_mask_2_struct.nii.gz" -init "${outdir}/dti2struct.mat" -applyxfm
+				fslmaths "${outdir}/${smri}.nii.gz" -mul "${outdir}/b0_brain_mask_2_struct.nii.gz" "${outdir}/${smri}_brain.nii.gz"
+			else #in case you don't have b0_brain_mask (i.e., you skipped the preprocessing, and are only doing ROI analysis)
+				bet2 "${outdir}/dti_FA.nii.gz" "${outdir}/dti_FA_brain" -m
+				flirt -in "${outdir}/dti_FA_brain_mask.nii.gz" -ref "${outdir}/${smri}.nii.gz" -interp nearestneighbour -out "${outdir}/dti_FA_brain_mask_2_struct.nii.gz" -init "${outdir}/dti2struct.mat" -applyxfm
+				fslmaths "${outdir}/${smri}.nii.gz" -mul "${outdir}/dti_FA_brain_mask_2_struct.nii.gz" "${outdir}/${smri}_brain.nii.gz"
+			fi
+
 			flirt -ref "${template}" -in "${outdir}/${smri}_brain.nii.gz" -omat "${outdir}/struct2template_aff.mat"
 			fnirt --in="${outdir}/${smri}.nii.gz" --aff="${outdir}/struct2template_aff.mat" --cout="${outdir}/struct2template_warps" \
 			--ref="${template}" ${template_mask}--imprefm=1 \
