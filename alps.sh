@@ -581,8 +581,8 @@ then
 	alps=`echo "($alps_R+$alps_L)/2" | bc -l`
 
 	echo "${id},${scanner1},${x_proj_L},${x_assoc_L},${y_proj_L},${z_assoc_L},${x_proj_R},${x_assoc_R},${y_proj_R},${z_assoc_R},${alps_L},${alps_R},${alps}" >> "${outdir}/alps.stat/alps.csv"
-elif [ "$rois" == "0" ]
-	then echo "ROI analysis skipped by the user.";
+elif [ "$rois" == "0" ]; then 
+	echo "ROI analysis skipped by the user.";
 fi
 
 echo "Finito! Please cite this repository (https://github.com/gbarisano/alps/) and the paper:
