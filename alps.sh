@@ -525,9 +525,12 @@ then
 		else
 			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-			flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-			flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-			flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+   			vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+			vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+			vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
 			elif [ "$warp" == "1" ]; then echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
 			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
