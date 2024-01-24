@@ -81,23 +81,23 @@ print_usage() {
 
 while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:v:h:w:s:o:' flag; do
   case "${flag}" in
-    a) dwi1="${OPTARG}" ;;
-    b) bval1="${OPTARG}" ;;
-    c) bvec1="${OPTARG}" ;;
-    m) json1="${OPTARG}" ;;
-		i) dwi2="${OPTARG}" ;;
-		j) bval2="${OPTARG}" ;;
-		k) bvec2="${OPTARG}" ;;
-		n) json2="${OPTARG}" ;;
-		d) denoise="${OPTARG}" ;;
-		e) eddy="${OPTARG}" ;;
-		r) rois="${OPTARG}" ;;
-		t) template="${OPTARG}" ;;
-		v) struct="${OPTARG}" ;;
-		h) weight="${OPTARG}" ;;
-		w) warp="${OPTARG}" ;;
-		s) skip="${OPTARG}" ;;
-		o) output_dir_name="${OPTARG}" ;;
+    a) dwi1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    b) bval1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    c) bvec1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    m) json1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    i) dwi2="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    j) bval2="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    k) bvec2="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    n) json2="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    d) denoise="${OPTARG}" ;;
+    e) eddy="${OPTARG}" ;;
+    r) rois="${OPTARG}" ;;
+    t) template="${OPTARG}" ;;
+    v) struct="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
+    h) weight="${OPTARG}" ;;
+    w) warp="${OPTARG}" ;;
+    s) skip="${OPTARG}" ;;
+    o) output_dir_name="${OPTARG}" ;;
     *) print_usage
        exit 1 ;;
   esac
@@ -178,6 +178,7 @@ if [ "$rois" != "0" ]; then
 				fi
 			fi
 		else
+  			template="$(echo "$(cd "$(dirname "${template}")" && pwd)/$(basename "${template}")")"
 			echo "User specified template: $template"
 			template_abbreviation=template
 		fi
