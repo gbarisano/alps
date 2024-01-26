@@ -2,11 +2,13 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
+As of 2024-01-26, the script performs the registration of the tensors to the template space with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), which seems to lead to more robust estimation of the ALPS index (see PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/)).
+
 If you use this script, please cite our work AND report the link to this repository: 
 - Paper: [Liu, X, Barisano, G, et al., Cross-Vendor Test-Retest Validation of Diffusion Tensor Image Analysis along the Perivascular Space (DTI-ALPS) for Evaluating Glymphatic System Function, Aging and Disease (2023)](http://www.aginganddisease.org/EN/10.14336/AD.2023.0321-2). DOI: https://doi.org/10.14336/AD.2023.0321-2
 - Link to this repository: https://github.com/gbarisano/alps/
 
-If you have any question, please contact me: barisano at stanford.edu.
+If you have any question, please contact me: barisano [at] stanford [dot] edu.
 
 ## Table of contents
 - [Required libraries](#required-libraries)
@@ -81,7 +83,7 @@ To correct for susceptibility-induced distortions, the user must define the foll
 - ```-s```: Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 
   - 0 [default] = all the steps are performed; 
   - 1 = ONLY ROI analysis is performed;  
-If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED. 
+If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE ```dti_FA.nii.gz``` AND ```dti_tensor.nii.gz``` ARE LOCATED. 
  This option is useful for example when the user wants to perform the ROI analysis in NATIVE space with custom ROIs drawn on the output of the DTI processing steps (dti_FA.nii.gz) (see [Example 4](#4-alps-analysis-with-1-dwi-input-in-native-space--t-0-after-drawing-rois-on-the-output-dti_faniigz)). In this case, the user can run the ```alps``` script twice: the first time skipping the ROI analysis (```-r 0``` option), then draw the ROIs on the dti_FA.nii.gz output, and then re-run the ```alps``` script with the options ```-s 1```, ```-r myroi1.nii.gz,myroi2.nii.gz,myroi3.nii.gz,myroi4.nii.gz``` and ```-o outputdirectory``` (where "outputdirectory" is the directory where dti_FA.nii.gz and the other tensor files are located).  
  If you want to include the ```id``` name in the output csv file with the ALPS index, include the ```-a``` option with the ID you want to use (e.g., ```-a myID```; if ```-a``` is a ```.nii``` or ```.nii.gz``` file, then the file extension will be excluded from the ID name: ```-a mynifti.nii.gz``` will result in ID ```mynifti```).
   
@@ -90,7 +92,6 @@ If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER W
  $$ALPS=mean(Dxproj,Dxassoc)/mean(Dyproj,Dzassoc)$$
 The last column named ```alps``` is the average of the ALPS index on the left and right side.
 - DTI FITTING outputs: these ```.nii.gz``` files are the outputs from the FSL command ```dtifit``` and their names start with ```dti_```
-- TENSOR files: these ```vol000X.nii.gz``` files are the tensor files from ```dti_tensor.nii.gz``` separated in different volumes.
 - ALPS tensor files: ```dxx.nii.gz```,```dyy.nii.gz```, and ```dzz.nii.gz``` are the tensor files used for the calculation of the ALPS index. If the analysis is done on a template space, the corresponding files transformed to the template space will be also output.
 - Preprocessing outputs: for each input dwi, the following files will be possibly output (based on the user-defined ```-d``` option): ```dwi1.denoised.nii.gz```,```dwi1.unring.nii.gz```,```dwi1.denoised.unring.nii.gz```, which represents the denoised dwi image, the unringed dwi image, and the denoised+unringed dwi image, respectively. If 2 dwi inputs are provided, the output will be generated for each input.
 - Eddy current correction outputs: these files' name starts with ```eddy_corrected_data.```
