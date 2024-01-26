@@ -475,19 +475,20 @@ if [ $skip -eq 0 ]; then
 	fi
 
 	echo "DTI FITTING completed!"
-	fslsplit "${outdir}/dti_tensor.nii.gz" 
-	cp "${outdir}/vol0000.nii.gz" "${outdir}/dxx.nii.gz" 
-	cp "${outdir}/vol0003.nii.gz" "${outdir}/dyy.nii.gz" 
-	cp "${outdir}/vol0005.nii.gz" "${outdir}/dzz.nii.gz"
+	#fslsplit "${outdir}/dti_tensor.nii.gz" 
+	#cp "${outdir}/vol0000.nii.gz" "${outdir}/dxx.nii.gz" 
+	#cp "${outdir}/vol0003.nii.gz" "${outdir}/dyy.nii.gz" 
+	#cp "${outdir}/vol0005.nii.gz" "${outdir}/dzz.nii.gz"
 elif [ $skip -eq 1 ]; then
 	if [ ! $output_dir_name ]; then echo "ERROR! Option -s is set to 1, therefore option -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED."; exit 1; fi;
 	echo "Preprocessing and DTI fitting skipped by the user (-s 1 option). ONLY ROI ANALYSIS IS PERFORMED. Checking all required inputs are available..."
 	outdir="${output_dir_name}"
 	if [ -f "${outdir}/alps.stat/alps.csv" ] && [ ! -z "`tail -n 1 "${outdir}/alps.stat/alps.csv" | tr -d ,`" ]; then echo "ERROR! Final output alps.csv already exists and is not empty! Remove/rename the "alps.stat" folder or the "alps.stat/alps.csv" file in order to run the ROI analysis only (-s 1) in ${outdir}"; exit 1; fi;
-	if [ -f "${outdir}/dti_FA.nii.gz" ]; then echo "dti_FA.nii.gz is available for ROI analysis with template"; else echo "ERROR! Cannot find ${outdir}/dti_FA.nii.gz, needed for ROI analysis with template. Double check that ${outdir}/dti_FA.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
-	if [ -f "${outdir}/dxx.nii.gz" ]; then echo "dxx.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dxx.nii.gz, needed for ROI analysis. Double check that ${outdir}/dxx.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
-	if [ -f "${outdir}/dyy.nii.gz" ]; then echo "dyy.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dyy.nii.gz, needed for ROI analysis. Double check that ${outdir}/dyy.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
-	if [ -f "${outdir}/dyy.nii.gz" ]; then echo "dzz.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dzz.nii.gz, needed for ROI analysis. Double check that ${outdir}/dzz.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
+	if [ -f "${outdir}/dti_FA.nii.gz" ]; then echo "dti_FA.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dti_FA.nii.gz, needed for ROI analysis. Double check that ${outdir}/dti_FA.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
+ 	if [ -f "${outdir}/dti_tensor.nii.gz" ]; then echo "dti_tensor.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dti_tensor.nii.gz, needed for ROI analysis. Double check that ${outdir}/dti_tensor.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
+	#if [ -f "${outdir}/dxx.nii.gz" ]; then echo "dxx.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dxx.nii.gz, needed for ROI analysis. Double check that ${outdir}/dxx.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
+	#if [ -f "${outdir}/dyy.nii.gz" ]; then echo "dyy.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dyy.nii.gz, needed for ROI analysis. Double check that ${outdir}/dyy.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
+	#if [ -f "${outdir}/dyy.nii.gz" ]; then echo "dzz.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dzz.nii.gz, needed for ROI analysis. Double check that ${outdir}/dzz.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
 fi 
 
 # 3. ROI ANALYSIS
@@ -520,26 +521,30 @@ then
 			--lambda=300,150,100,50,40,30 --estint=1,1,1,1,1,0 --applyrefmask=1,1,1,1,1,1 --applyinmask=1 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_non_linear_with_bias --intorder=5 --biasres=50,50,50 --biaslambda=10000 --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_struct.nii.gz" -t "${outdir}/dti2struct.mat"
+   			vecreg -i "${outdir}/dti_tensor_in_struct.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/struct2template_warps"
+			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
 		else
 			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
 			#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 			#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 			#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-   			vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-			vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-			vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+   			#vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+			#vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+			#vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
 			elif [ "$warp" == "1" ]; then echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
 			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
 			elif [ "$warp" == "2" ]; then echo "Linear (flirt) + Non-Linear (fnirt) registration to template";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -omat "${outdir}/FA_to_${template_abbreviation}_aff.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
 			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--aff="${outdir}/FA_to_${template_abbreviation}_aff.mat" \
@@ -547,15 +552,23 @@ then
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
 			fi
 		fi
+   		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dxx_in_${template_abbreviation}.nii.gz" 0 1
+     		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dyy_in_${template_abbreviation}.nii.gz" 2 1
+       		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dzz_in_${template_abbreviation}.nii.gz" 5 1
 		dxx="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
 		dyy="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
 		dzz="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
 	elif [ "$template" == "0" ]; then #analysis in native space
+ 		echo "ALPS analysis in native space"
+   		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dxx.nii.gz" 0 1
+     		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dyy.nii.gz" 2 1
+       		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dzz.nii.gz" 5 1
 		dxx="${outdir}/dxx.nii.gz"
 		dyy="${outdir}/dyy.nii.gz"
 		dzz="${outdir}/dzz.nii.gz"
