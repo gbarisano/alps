@@ -2,7 +2,8 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
-As of 2024-01-26, the script performs the registration of the tensors to the template space with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), which seems to lead to more robust estimation of the ALPS index (see PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/)).
+As of 2024-02-03, there is a new option (-f) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/)).
+The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
 If you use this script, please cite our work AND report the link to this repository: 
 - Paper: [Liu, X, Barisano, G, et al., Cross-Vendor Test-Retest Validation of Diffusion Tensor Image Analysis along the Perivascular Space (DTI-ALPS) for Evaluating Glymphatic System Function, Aging and Disease (2023)](http://www.aginganddisease.org/EN/10.14336/AD.2023.0321-2). DOI: https://doi.org/10.14336/AD.2023.0321-2
@@ -79,6 +80,9 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 0 [default] = perform linear registration of the reconstructed FA map to the template
     - 1 = perform ONLY non-linear registration (warping) of the reconstructed FA map to the template using FSL's suggested default parameters (not recommended).
     - 2 = perform linear (flirt) + non-linear registration (fnirt)
+- ```-f```: Define FSL's function to transform the TENSOR to the template. 
+    - 1 [default] = Use ```flirt``` (if -w = 0) or ```applywarp``` (if -w = 1 or 2 or -v is not empty) to transform the TENSOR file to the template space.
+    - 2 = use ```vecreg``` to transform the TENSOR file to the template space. 
 - ```-o```: name of the output folder. If not specified, the default output folder will be called 'alps' and will be located in the same folder of the (first) input.
 - ```-s```: Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 
   - 0 [default] = all the steps are performed; 
