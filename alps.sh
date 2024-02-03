@@ -37,6 +37,7 @@ template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as FA template or FSL's MNI tem
 skip=0 #perform all the steps of the pipeline. 
 eddy=1 #try to use eddy_openmp
 warp=0 #perform linear registration of the FA map to the template.
+freg=1 #if the analysis is done on template space, by default it will use FSL's flirt or applywarp to transform the TENSOR file to the template.
 struct='' #structural MRI data (can be either a T1-weighted or a T2-weighted image, no FLAIR, no PD)
 weight=1 #if a structural MRI data is provided, by default it will be considered a T1-weighted image.
 
@@ -57,6 +58,7 @@ print_usage() {
 -v VOLUMETRIC structural MRI data \n\
 -h WeigHt of the volumetric structural MRI data \n\
 -w WARP the reconstructed FA map to the template \n\
+-f Use flirt or applywarp or vecreg to transform the TENSOR file to the template \n\
 -s SKIP preprocessing and DTI fitting, i.e. perform ONLY ROI analysis \n\
 -o OUTPUT_DIR_NAME \n"
   printf "\nDefault values: \n\
@@ -72,6 +74,8 @@ print_usage() {
 	-h weight of the structural MRI data [default = 1]; 1=T1-weighted image; 2=T2-weighted image (no PD, no FLAIR).
 	-w WARP [default = 0]; 0=perform linear registration of the reconstructed FA map to the template; 1=perform ONLY non-linear registration (warping) of the reconstructed FA map to the template using FSL's suggested default parameters (not recommended). \n\
 		2=perform linear (flirt) + non-linear registration (fnirt); option -w is ignored when a structural MRI is used (-v is not empty).
+  	-f method to transform the TENSOR to the template [default = 1]; 1=use flirt (or applywarp if WARP is 1 or 2 or -V is not empty) to transform the TENSOR to the template; \n\
+   		2=use FSL's vecreg to transform the TENSOR to the template.
 	-s Option to skip preprocessing and DTI fitting, i.e. performs ONLY ROI analysis [default = 0]; 0 = all the steps are performed; 1= ONLY ROI analysis is performed;
 		If -s 1, then -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED.   \n\
 	-o OUTPUT_DIR_NAME [default = 1]; default option will create a folder called \"alps\" located in the directory of the (first) input. \n\
@@ -79,7 +83,7 @@ print_usage() {
 	\nExample with 2 inputs with opposite phase encoding direction: sh alps.sh -a dwi_PA.nii.gz -b id_PA.bval -c id_PA.bvec -m id_PA.json -i dwi_AP.nii.gz -j id_AP.bval -k id_AP.bvec -n id_AP.json -d 1 -o alps\n"
 }
 
-while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:v:h:w:s:o:' flag; do
+while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:v:h:w:f:s:o:' flag; do
   case "${flag}" in
     a) dwi1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
     b) bval1="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
@@ -96,6 +100,7 @@ while getopts 'a:b:c:m:i:j:k:n:d:e:r:t:v:h:w:s:o:' flag; do
     v) struct="$(echo "$(cd "$(dirname "${OPTARG}")" && pwd)/$(basename "${OPTARG}")")" ;;
     h) weight="${OPTARG}" ;;
     w) warp="${OPTARG}" ;;
+    f) freg="${OPTARG}" ;;
     s) skip="${OPTARG}" ;;
     o) output_dir_name="${OPTARG}" ;;
     *) print_usage
@@ -184,6 +189,7 @@ if [ "$rois" != "0" ]; then
 		fi
 		if [ ! -f "${template}" ]; then echo "ERROR! Cannot find the template "$template". The template file must exist if -t option is not 0."; exit 1; fi;
 		if [ $warp -ne 0 ] && [ $warp -ne 1 ] && [ $warp -ne 2 ]; then echo "ERROR! The option specified with -w is $warp, which is not an allowed option. -w must be equal to 0 (for linear registration) or 1 (for non-linear registration)."; exit 1; fi;
+  		if [ $freg -ne 1 ] && [ $freg -ne 2 ]; then echo "ERROR! The option specified with -f is $freg, which is not an allowed option. -f must be equal to 1 (for using FSL's flirt and/or applywarp depending on -w) or 2 (for using FSL's vecreg)."; exit 1; fi;
 	fi
 fi
 	#OPTIONS
@@ -212,6 +218,7 @@ echo -e "Running ALPS with the following parameters: \n
 -v $struct \n
 -h $weight \n
 -w $warp \n
+-f $freg \n
 -s $skip \n
 -o $output_dir_name"
 
@@ -521,30 +528,42 @@ then
 			--lambda=300,150,100,50,40,30 --estint=1,1,1,1,1,0 --applyrefmask=1,1,1,1,1,1 --applyinmask=1 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_non_linear_with_bias --intorder=5 --biasres=50,50,50 --biaslambda=10000 --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_struct.nii.gz" -t "${outdir}/dti2struct.mat"
-   			vecreg -i "${outdir}/dti_tensor_in_struct.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/struct2template_warps"
-			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+	   			if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
+	      			applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
+	      			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+	   			elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+	   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_struct.nii.gz" -t "${outdir}/dti2struct.mat"
+	   			vecreg -i "${outdir}/dti_tensor_in_struct.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/struct2template_warps"
+	      			fi
 		else
 			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-			#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-			#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-			#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-   			#vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-			#vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-			#vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with flirt";
+	      			flirt -in "${outdir}/dti_tensor.nii.gz" -ref "${template}" -out "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+		 		#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+				#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+				#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+	   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+       				#vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+				#vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+				#vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+				fi
 			elif [ "$warp" == "1" ]; then echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
 			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
-			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+	   			if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
+	      			applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+    				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+	   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+       				fi
 			elif [ "$warp" == "2" ]; then echo "Linear (flirt) + Non-Linear (fnirt) registration to template";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -omat "${outdir}/FA_to_${template_abbreviation}_aff.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
 			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--aff="${outdir}/FA_to_${template_abbreviation}_aff.mat" \
@@ -552,10 +571,14 @@ then
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
-			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-			#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+   				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
+       				applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
+       				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+				#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+    				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+   				vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+				fi
 			fi
 		fi
    		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dxx_in_${template_abbreviation}.nii.gz" 0 1
