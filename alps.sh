@@ -511,7 +511,15 @@ then
    			#hashtagged the following 2 lines because bet2 does not work super well in all struct MRI scans.
 			#bet2 "${outdir}/${smri}.nii.gz" "${outdir}/${smri}_brain" -m #this is used for flirt dti2struct and flirt struct2template
 			#flirt -ref "${outdir}/${smri}_brain.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -omat "${outdir}/dti2struct.mat"
-			flirt -ref "${outdir}/${smri}.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -out "${outdir}/dti_FA_2_${smri}.nii.gz" -omat "${outdir}/dti2struct.mat"
+   			if [ $weight == "1" ]; then
+				flirt -ref "${outdir}/${smri}.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -out "${outdir}/dti_FA_2_${smri}.nii.gz" -omat "${outdir}/dti2struct.mat"
+   			elif [ $weight == "2" ]; then #if it's a T2, it's better to align the b0 volume rather than the FA, because the b0 contrast is more similar to T2.
+	      			if [ -f "${outdir}/b0.nii.gz" ]; then
+	      			flirt -ref "${outdir}/${smri}.nii.gz" -in "${outdir}/b0.nii.gz" -dof 6 -out "${outdir}/b0_2_${smri}.nii.gz" -omat "${outdir}/dti2struct.mat"
+		 		else #in case you don't have b0 (i.e., you skipped the preprocessing, and are only doing ROI analysis with a dti_FA map ready)
+     				flirt -ref "${outdir}/${smri}.nii.gz" -in "${outdir}/dti_FA.nii.gz" -dof 6 -out "${outdir}/dti_FA_2_${smri}.nii.gz" -omat "${outdir}/dti2struct.mat"
+    				fi
+	 		fi
 			if [ -f "${outdir}/b0_brain_mask.nii.gz" ]; then
 				flirt -in "${outdir}/b0_brain_mask.nii.gz" -ref "${outdir}/${smri}.nii.gz" -interp nearestneighbour -out "${outdir}/b0_brain_mask_2_struct.nii.gz" -init "${outdir}/dti2struct.mat" -applyxfm
 				fslmaths "${outdir}/${smri}.nii.gz" -mul "${outdir}/b0_brain_mask_2_struct.nii.gz" "${outdir}/${smri}_brain.nii.gz"
