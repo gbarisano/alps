@@ -590,7 +590,7 @@ then
 			fi
 		fi
    		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dxx_in_${template_abbreviation}.nii.gz" 0 1
-     		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dyy_in_${template_abbreviation}.nii.gz" 2 1
+     		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dyy_in_${template_abbreviation}.nii.gz" 3 1
        		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dzz_in_${template_abbreviation}.nii.gz" 5 1
 		dxx="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
 		dyy="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
@@ -598,7 +598,7 @@ then
 	elif [ "$template" == "0" ]; then #analysis in native space
  		echo "ALPS analysis in native space"
    		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dxx.nii.gz" 0 1
-     		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dyy.nii.gz" 2 1
+     		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dyy.nii.gz" 3 1
        		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dzz.nii.gz" 5 1
 		dxx="${outdir}/dxx.nii.gz"
 		dyy="${outdir}/dyy.nii.gz"
