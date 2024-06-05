@@ -71,7 +71,7 @@ To correct for susceptibility-induced distortions, the user must define the foll
       3. ```LEFT``` ASSOCIATION FIBERS (superior longitudinal fasciculus)
       4. ```RIGHT``` ASSOCIATION FIBERS (superior longitudinal fasciculus)
   - ```-t```: template to use for the ROI analysis [default = 1]. Only used if ```-r``` is not equal to 0. The DTI maps will be registered to the template specified by the user.
-    - 0 = performs the analysis in NATIVE space. A list of 4 custom ROIs in NATIVE space must be specified with the ```-r``` option.
+    - 0 = performs the analysis in NATIVE space. A list of 4 custom ROIs in NATIVE space can be specified with the ```-r``` option. Alternatively, if ```-r``` option is 1 (default), then the default ROIs will be linearly registered from JHU-FA template space into native space.
     - 1 [default] = ```JHU-ICBM-FA-1mm.nii.gz``` (if no structural MRI data input), ```MNI_T1_1mm_brain.nii.gz``` (if structural data input is a T1) or ```JHU-ICBM-T2-1mm.nii.gz``` (if structural data input is a T2) in FSLDIR will be used as template.
     - alternatively, the user can specify a ```NIfTI``` file to be used as a template. The ROIs must be in the same space of this template. The DTI maps will be registered to this template.
 - ```-v```: VOLUMETRIC structural MRI data (a T1w or T2w NIfTI ```nii.gz``` file) to be used for registration of the FA map to the template
