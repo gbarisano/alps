@@ -603,6 +603,18 @@ then
 		dxx="${outdir}/dxx.nii.gz"
 		dyy="${outdir}/dyy.nii.gz"
 		dzz="${outdir}/dzz.nii.gz"
+  		if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ]; then
+    			template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
+			template_abbreviation=JHU-FA
+    			flirt -ref "${outdir}/dti_FA.nii.gz" -in "${template}" -out "${outdir}/dti_FA_${template_abbreviation}_to_native.nii.gz" -omat "${outdir}/${template_abbreviation}_to_native.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+       			for r in $(echo $rois | tr -s ',' ' '); do
+	  			flirt -in "${r}" -ref "${outdir}/dti_FA.nii.gz" -out "${outdir}/$(basename ${r})_native.nii.gz" -init "${outdir}/${template_abbreviation}_to_native.mat" -applyxfm -interp nearestneighbour
+      			done
+	  		proj_L=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f1)")"_native.nii.gz
+     			proj_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f2)")"_native.nii.gz
+			assoc_L=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f3)")"_native.nii.gz
+   			assoc_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f4)")"_native.nii.gz
+	  	fi
 	fi
 
 	
