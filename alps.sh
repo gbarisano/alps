@@ -549,7 +549,7 @@ then
 		else
 			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-   			flirt -in "${outdir}/dti_MD.nii.gz" -ref "${template}" -out "${outdir}/dti_MD_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+   			flirt -in "${outdir}/dti_MD.nii.gz" -ref "${template}" -out "${outdir}/dti_MD_to_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with flirt";
 	      			flirt -in "${outdir}/dti_tensor.nii.gz" -ref "${template}" -out "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 		 		#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
