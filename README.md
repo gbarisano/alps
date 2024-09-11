@@ -2,7 +2,7 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
-As of 2024-02-03, there is a new option (-f) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/)).
+As of 2024-02-03, there is a new option (-f) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
 The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
 If you use this script, please cite our work AND report the link to this repository: 
@@ -95,6 +95,7 @@ If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER W
 - The main output is a ```csv``` file named ```alps.csv``` located in ```alps.stat``` folder in the output directory. This file includes the ```id``` (based on the ```-a``` input), the scanner manufacturer (based on the ```-m``` input), and the metrics required to compute the ALPS index, separately for the left and right side: 
  $$ALPS=mean(Dxproj,Dxassoc)/mean(Dyproj,Dzassoc)$$
 The last column named ```alps``` is the average of the ALPS index on the left and right side.
+- UPDATE 09-11-2024: an additional ```csv``` file named ```fa+md_alps.csv``` located in ```alps.stat``` folder in the output directory is generated. This file includes the same ```id``` header as the main output ```alps.csv``` and the fractional anisotrophy (FA) and mean diffusivity (MD) measured in the same exact ROIs used for the ALPS index, on both sides. The last 2 columns are the average measures of the FA and MD on the left and right side of the projection fibers and the left and right side of the association fibers.
 - DTI FITTING outputs: these ```.nii.gz``` files are the outputs from the FSL command ```dtifit``` and their names start with ```dti_```
 - ALPS tensor files: ```dxx.nii.gz```,```dyy.nii.gz```, and ```dzz.nii.gz``` are the tensor files used for the calculation of the ALPS index. If the analysis is done on a template space, the corresponding files transformed to the template space will be also output.
 - Preprocessing outputs: for each input dwi, the following files will be possibly output (based on the user-defined ```-d``` option): ```dwi1.denoised.nii.gz```,```dwi1.unring.nii.gz```,```dwi1.denoised.unring.nii.gz```, which represents the denoised dwi image, the unringed dwi image, and the denoised+unringed dwi image, respectively. If 2 dwi inputs are provided, the output will be generated for each input.
