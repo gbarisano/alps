@@ -536,6 +536,7 @@ then
 			--lambda=300,150,100,50,40,30 --estint=1,1,1,1,1,0 --applyrefmask=1,1,1,1,1,1 --applyinmask=1 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_non_linear_with_bias --intorder=5 --biasres=50,50,50 --biaslambda=10000 --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
 	   			if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
 	      			applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
 	      			#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/struct2template_warps" --premat="${outdir}/dti2struct.mat" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
@@ -548,6 +549,7 @@ then
 		else
 			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
 			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+   			flirt -in "${outdir}/dti_MD.nii.gz" -ref "${template}" -out "${outdir}/dti_MD_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with flirt";
 	      			flirt -in "${outdir}/dti_tensor.nii.gz" -ref "${template}" -out "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
 		 		#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
@@ -564,6 +566,7 @@ then
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
 	   			if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
 	      			applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
 				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
@@ -579,6 +582,7 @@ then
 			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
 			--regmod=bending_energy --intmod=global_linear --refderiv=0
 			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
    				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
        				applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
        				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
@@ -595,6 +599,8 @@ then
 		dxx="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
 		dyy="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
 		dzz="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+  		fa="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+    		md="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
 	elif [ "$template" == "0" ]; then #analysis in native space
  		echo "ALPS analysis in native space"
    		fslroi "${outdir}/dti_tensor.nii.gz" "${outdir}/dxx.nii.gz" 0 1
@@ -603,6 +609,8 @@ then
 		dxx="${outdir}/dxx.nii.gz"
 		dyy="${outdir}/dyy.nii.gz"
 		dzz="${outdir}/dzz.nii.gz"
+  		fa="${outdir}/dti_FA.nii.gz"
+	 	md="${outdir}/dti_MD.nii.gz"
   		if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ]; then
     			template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
 			template_abbreviation=JHU-FA
@@ -621,7 +629,8 @@ then
 	#GATHER STATS
 	mkdir -p "${outdir}/alps.stat"
 	echo "id,scanner,x_proj_L,x_assoc_L,y_proj_L,z_assoc_L,x_proj_R,x_assoc_R,y_proj_R,z_assoc_R,alps_L,alps_R,alps" > "${outdir}/alps.stat/alps.csv"
-	
+	echo "id,scanner,diffusion_metric,proj_L,assoc_L,proj_R,assoc_R,mean_proj,mean_assoc" > "${outdir}/alps.stat/fa+md_alps.csv"
+ 
 	if [[ "$dwi1" == *".nii" ]]; then 
 		id="$(basename "$dwi1" .nii)"
 	elif [[ $dwi1 == *".nii.gz" ]]; then
@@ -641,6 +650,18 @@ then
 	alps=`echo "($alps_R+$alps_L)/2" | bc -l`
 
 	echo "${id},${scanner1},${x_proj_L},${x_assoc_L},${y_proj_L},${z_assoc_L},${x_proj_R},${x_assoc_R},${y_proj_R},${z_assoc_R},${alps_L},${alps_R},${alps}" >> "${outdir}/alps.stat/alps.csv"
+
+ 	#FA and MD values from projection and association areas
+  	for diff in "${fa}" "${md}"; do
+   		pl="$(fslstats "${diff}" -k "${proj_L}" -m)"
+     		pr="$(fslstats "${diff}" -k "${proj_R}" -m)"
+       		al="$(fslstats "${diff}" -k "${assoc_L}" -m)"
+	 	ar="$(fslstats "${diff}" -k "${assoc_R}" -m)"
+   		pmean=`echo "($pl+$pr)/2" | bc -l`
+     		amean=`echo "($al+$ar)/2" | bc -l`
+       		if [ "${diff}" == "${fa}" ]; then d="FA"; else d="MD"; fi
+   		echo "${id},${scanner1},${d},${pl},${al},${pr},${ar},${pmean},${amean}" >> "${outdir}/alps.stat/fa+md_alps.csv"
+    	done
 elif [ "$rois" == "0" ]; then 
 	echo "ROI analysis skipped by the user.";
 fi
