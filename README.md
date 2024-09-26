@@ -20,7 +20,7 @@ If you have any question, please contact me: barisano [at] stanford [dot] edu.
 - [Examples of usage](#examples-of-usage)
 
 ## Required libraries
-- FSL v. 6.0.3 or newer (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) (it should work with older versions of FSL, but you might need to get the b02b0_1.cnf configuration file from newer FSL versions. This configuration file is needed in case your dwi input has odd number of slices. Older versions of FSL will also give you LESS consistent results, i.e., if you launch the script 100 times with the same inputs, you will have 100 slightly different ALPS results, with a variability in the order of about 0.001).
+- FSL v. 6.0.6 or newer (https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation) (it should work with older versions of FSL, but you might need to get the b02b0_1.cnf configuration file from newer FSL versions and specify the ```eddy``` command to use via the option ```-e```. This configuration file is needed in case your dwi input has odd number of slices. Older versions of FSL will also give you LESS consistent results, i.e., if you launch the script 100 times with the same inputs, you will have 100 slightly different ALPS results, with a variability in the order of about 0.001).
 - MRtrix3 (https://www.mrtrix.org/download) (only needed for preprocessing steps)
 
 This script assumes that FSL and MRtrix3 are in your $PATH.
@@ -54,7 +54,7 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 3 = only unringing
   - ```-e```: determines which EDDY program to use [default = 1]
     - 0 = skip eddy correction (not recommended) (this is the same as running ```alps.sh``` without specifying the ```json``` file with the ```-m``` option, but using only the inputs ```-a```, ```-b```, and ```-c```); 
-    - 1 [default] = use ```${FSLDIR}/bin/eddy_openmp``` (should take 1-to-2 hours to run, for most inputs);
+    - 1 [default] = use ```${FSLDIR}/bin/eddy_cpu``` (should take 1-to-2 hours to run, for most inputs); (this was updated on 09.26.2024: previous versions used ```eddy_openmp``` as default, which has been [deprecated](https://github.com/Washington-University/HCPpipelines/issues/264) in newer versions of FSL.
     - 2 = use ```${FSLDIR}/bin/eddy``` (should take ~7 hours to run, for most inputs);
     - 3 = use  ```${FSLDIR}/bin/eddy_correct``` (does not require a metadata file)
     - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ```${FSLDIR}/bin/``` (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file).
