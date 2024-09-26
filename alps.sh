@@ -35,7 +35,7 @@ denoise=1 # perform the denoise and unringing
 rois=1 # perform the ROI analysis using the provided ROIs drawn on JHU-ICBM-FA-1mm.nii.gz
 template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as FA template or FSL's MNI template if the structural MRI data is provided. 
 skip=0 #perform all the steps of the pipeline. 
-eddy=1 #try to use eddy_openmp
+eddy=1 #try to use eddy_cpu
 warp=0 #perform linear registration of the FA map to the template.
 freg=1 #if the analysis is done on template space, by default it will use FSL's flirt or applywarp to transform the TENSOR file to the template.
 struct='' #structural MRI data (can be either a T1-weighted or a T2-weighted image, no FLAIR, no PD)
@@ -63,7 +63,7 @@ print_usage() {
 -o OUTPUT_DIR_NAME \n"
   printf "\nDefault values: \n\
 	-d DENOISING [default = 1];  0=skip; 1=both denoise and unringing; 2=only denoise; 3=only unringing. \n\
-	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=use ${FSLDIR}/bin/eddy_openmp; 2=use ${FSLDIR}/bin/eddy; 3=use ${FSLDIR}/bin/eddy_correct; 
+	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=use ${FSLDIR}/bin/eddy_cpu; 2=use ${FSLDIR}/bin/eddy; 3=use ${FSLDIR}/bin/eddy_correct; 
 				alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include \"${FSLDIR}/bin/\" in the command, just the name of the binary file)\n\
 	-r ROIS [default = 1]; 0=skip ROI analysis; 1=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
 		alternatively, a comma-separated list of 4 custom ROI nifti files can be specified.
@@ -194,10 +194,10 @@ if [ "$rois" != "0" ]; then
 fi
 	#OPTIONS
 if [ "$denoise" != "0" ] && [ "$denoise" != "1" ] && [ "$denoise" != "2" ] && [ "$denoise" != "3" ]; then echo "-d option is equal to $denoise, which is not an allowed option. -d must be equal to 0, 1, 2, or 3, or skipped (which corresponds to -d 1)."; print_usage; exit 1; fi;
-if [ "$eddy" == "1" ] && [ ! -f "${FSLDIR}/bin/eddy_openmp" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_openmp, but ${FSLDIR}/bin/eddy_openmp cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
-if [ "$eddy" == "2" ] && [ ! -f "${FSLDIR}/bin/eddy" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy, but ${FSLDIR}/bin/eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
-if [ "$eddy" == "3" ] && [ ! -f "${FSLDIR}/bin/eddy_correct" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_correct, but ${FSLDIR}/bin/eddy_correct cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_openmp), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
-if [ "$eddy" != "0" ] && [ "$eddy" != "1" ] && [ "$eddy" != "2" ] && [ "$eddy" != "3" ] && [ ! -f "${FSLDIR}/bin/$eddy" ]; then echo "-e option (eddy) is equal to $eddy, but ${FSLDIR}/bin/$eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) or 1 (use eddy_openmp if available, or eddy if not), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ "$eddy" == "1" ] && [ ! -f "${FSLDIR}/bin/eddy_cpu" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_cpu, but ${FSLDIR}/bin/eddy_cpu cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_cpu), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ "$eddy" == "2" ] && [ ! -f "${FSLDIR}/bin/eddy" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy, but ${FSLDIR}/bin/eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_cpu), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ "$eddy" == "3" ] && [ ! -f "${FSLDIR}/bin/eddy_correct" ]; then echo "-e option (eddy) is equal to $eddy (default), which means using ${FSLDIR}/bin/eddy_correct, but ${FSLDIR}/bin/eddy_correct cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) 1 (use ${FSLDIR}/bin/eddy_cpu), 2 (use ${FSLDIR}/bin/eddy), 3 (use ${FSLDIR}/bin/eddy_correct), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
+if [ "$eddy" != "0" ] && [ "$eddy" != "1" ] && [ "$eddy" != "2" ] && [ "$eddy" != "3" ] && [ ! -f "${FSLDIR}/bin/$eddy" ]; then echo "-e option (eddy) is equal to $eddy, but ${FSLDIR}/bin/$eddy cannot be found. -e must be equal to 0 (skip eddy correction, not recommended) or 1 (use eddy_cpu if available, or eddy if not), or skipped (default value = 1). If the user wants to use a specific eddy program, this must be located in ${FSLDIR}/bin/"; print_usage; exit 1; fi;
 if [ "$skip" != "0" ] && [ "$skip" != "1" ]; then echo "-s option is equal to $skip, which is not an allowed option. -s must be equal to 0 or 1, or skipped (default value = 0)."; print_usage; exit 1; fi;
 
 
@@ -265,7 +265,7 @@ if [ $skip -eq 0 ]; then
 		dwi1_processed="${dwi1}"
 	fi
 
-	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY with eddy_openmp
+	# IF YOU HAVE A METADATA (JSON) FILE, THEN YOU CAN RUN EDDY with eddy_cpu
 	if [ -f "${json1}" ]; then
 		# ACQUISITION PARAMETERS OF FIRST INPUT (REQUIRED FOR EDDY)
 		#scanner1=$(jq -r '.Manufacturer' "$json1") # -r gives you the raw output
@@ -397,9 +397,9 @@ if [ $skip -eq 0 ]; then
 				indx=""
 				for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 				echo $indx > index.txt
-				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
-					echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
-					eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
+				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_cpu ]; then 
+					echo "Found eddy_cpu! Running ${FSLDIR}/bin/eddy_cpu with default options"
+					eddy_cpu --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
 				elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
 					echo "Running ${FSLDIR}/bin/eddy with default options";
 					eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --topup=my_topup_results --out=eddy_corrected_data
@@ -420,9 +420,9 @@ if [ $skip -eq 0 ]; then
 				indx=""
 				for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 				echo $indx > index.txt
-				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
-						echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
-						eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
+				if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_cpu ]; then 
+						echo "Found eddy_cpu! Running ${FSLDIR}/bin/eddy_cpu with default options"
+						eddy_cpu --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
 				elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
 						echo "Running ${FSLDIR}/bin/eddy with default options";
 						eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
@@ -444,9 +444,9 @@ if [ $skip -eq 0 ]; then
 			indx=""
 			for ((i=1; i<=$n_vol; i+=1)); do indx="$indx 1"; done
 			echo $indx > index.txt
-			if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_openmp ]; then 
-					echo "Found eddy_openmp! Running ${FSLDIR}/bin/eddy_openmp with default options"
-					eddy_openmp --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
+			if [ $eddy == "1" ] && [ -f ${FSLDIR}/bin/eddy_cpu ]; then 
+					echo "Found eddy_cpu! Running ${FSLDIR}/bin/eddy_cpu with default options"
+					eddy_cpu --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
 			elif [ $eddy == "2" ] && [ -f ${FSLDIR}/bin/eddy ]; then 
 					echo "Running ${FSLDIR}/bin/eddy with default options";
 					eddy --imain="$dwi1_processed" --mask=b0_brain_mask --acqp=acqparams.txt --index=index.txt --bvecs=bvec1 --bvals=bval1 --out=eddy_corrected_data
