@@ -283,7 +283,7 @@ if [ $skip -eq 0 ]; then
 			#PEdir1=$(cat "${json1}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
    			#TotalReadoutTime1=$(cat "${json1}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
    			PEdir1=$(cat "${json1}" | awk -F'"' '/"PhaseEncodingDirection"/ {print $4}')
-      			TotalReadoutTime1=$(cat "${json1}" | awk -F'"' '/"TotalReadoutTime"/ {print $4}')
+      			TotalReadoutTime1=$(cat "${json1}" | grep -w TotalReadoutTime | cut -d ':' -f2 | cut -d ',' -f1 | xargs)
 			
 		fi
 		if [ "$PEdir1" = i ]; then printf "1 0 0 $TotalReadoutTime1" > "${outdir}/acqparams.txt";
@@ -332,7 +332,7 @@ if [ $skip -eq 0 ]; then
 					#PEdir2=$(cat "${json2}" | grep -w PhaseEncodingDirection | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
 					#TotalReadoutTime2=$(cat "${json2}" | grep -w TotalReadoutTime | cut -d ' ' -f2 | tr -d ',' | tr -d '"')
      					PEdir2=$(cat "${json2}" | awk -F'"' '/"PhaseEncodingDirection"/ {print $4}')
-      					TotalReadoutTime2=$(cat "${json2}" | awk -F'"' '/"TotalReadoutTime"/ {print $4}')
+      					TotalReadoutTime2=$(cat "${json2}" | grep -w TotalReadoutTime | cut -d ':' -f2 | cut -d ',' -f1 | xargs)
 				fi
     			else #if you don't have a json2 file, then assume that the PEdir2 is opposite to PEdir1 and that the TotalReadoutTime2 is equal to TotalReadoutTime1 
        				if [[ "${PEdir1}" == *"-"* ]]; then PEdir2=$(echo ${PEdir1} | tr -d '-')
