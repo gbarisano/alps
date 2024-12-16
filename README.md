@@ -33,9 +33,10 @@ You must define these elements (except when ```-s 1```, read [Optional arguments
 - ```-c```: ```bvec``` file
 - ```-m```: BIDS sidecar ```json``` file including the metadata of the input ```dwi``` (not required, but HIGHLY RECOMMENDED)  
 If you provide this file, then the script will try to perform eddy correction based on the acquisition parameters reported in the ```json``` file. The DTI fitting will use the eddy corrected data as input.
-  If you do not provide this file, then NO eddy correction will be performed (unless using the ```-e 3``` option, see below(#optional-arguments), and the DTI fitting will be performed on the raw ```dwi``` input or the preprocessed ```dwi``` input (if preprocessing is enabled).
-  If you do not have a metadata file but you still want to try to perform eddy correction, please use option ```-e 3``` to run ```eddy_correct``` function.
-  The script has been tested with ```json``` files generated from ```dcm2niix``` (https://github.com/rordenlab/dcm2niix)
+  If you do not provide this file, then NO eddy correction will be performed (unless using the ```-e 3``` option, see [below](#optional-arguments)), and the DTI fitting will be performed on the raw ```dwi``` input or the preprocessed ```dwi``` input (if preprocessing is enabled).
+If you do not have a metadata file but you still want to try to perform eddy correction, please use option ```-e 3``` to run ```eddy_correct``` function.
+
+The script has been tested with ```json``` files generated from ```dcm2niix``` (https://github.com/rordenlab/dcm2niix)
 
 ## Optional inputs
 A second ```dwi``` dataset with opposite phase encoding (PE) direction to correct for susceptibility-induced distortions. 
