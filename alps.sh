@@ -356,7 +356,7 @@ if [ $skip -eq 0 ]; then
 			if [ "$bval2" ]; then #if you don't have a bval2 file, then assume it equal to b0_dwi1, that should be 0.
    				b0_dwi2=`head -c 1 "$bval2"`
        			else
-	  			b0_dwi2=$b0_dw1
+	  			b0_dwi2=$b0_dwi1
       			fi
 			if [ "${PEdir1}" == "${PEdir2}-" ] || [ "${PEdir2}" == "${PEdir1}-" ] && ([ "${b0_dwi1}" == "${b0_dwi2}" ] && [ "${b0_dwi1}" == "0" ]);
 			then
