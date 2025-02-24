@@ -653,6 +653,8 @@ then
 		id="$(basename "$dwi1" .nii)"
 	elif [[ $dwi1 == *".nii.gz" ]]; then
 		id="$(basename "$dwi1" .nii.gz)"
+	else
+		id="$(basename "$dwi1")"
 	fi
 
 	x_proj_L="$(fslstats "${dxx}" -k "${proj_L}" -m)"
