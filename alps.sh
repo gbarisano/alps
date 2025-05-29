@@ -130,7 +130,8 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 	fi
 	echo "create output directory: ${outdir}"
 	mkdir -p "${outdir}"
- 	exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
+ 	#exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
+ 	exec > >(tee -a "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt) 2> >(tee -a "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt >&2)
   
 	#if [ ! $json1 ]; then echo "ERROR! metadata .json file (-m) is not defined."; print_usage; exit 1; fi
  	#CHECK FOR DWI2. Hashtagged, because: 
@@ -150,7 +151,8 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 elif [ $skip -eq 1 ]; then
 	if [ ! $output_dir_name ]; then echo "ERROR! Option -s is set to 1, therefore option -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED."; exit 1; fi;
  	outdir="${output_dir_name}"
-  	exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
+  	#exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
+   	exec > >(tee -a "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt) 2> >(tee -a "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt >&2)
 fi
 	#ROIS & TEMPLATE
 if [ "$rois" != "0" ]; then
