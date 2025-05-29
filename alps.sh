@@ -160,7 +160,7 @@ if [ "$rois" != "0" ]; then
 		echo "ROI analysis with default ROIs"
 		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz"
   		roption=$rois
-  	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then
+  	elif [[ "$rois" =~ ^-?([0-9]+\.?[0-9]*|\.[0-9]+)$ ]]; then
    		radius=$rois
 		echo "ROI analysis with user-defined spheric ROIs with radius $radius mm"
   		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" #only needed to pass the check below
