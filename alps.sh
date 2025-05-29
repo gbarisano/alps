@@ -32,7 +32,7 @@ json2=''
 
 # optional inputs with default options
 denoise=1 # perform the denoise and unringing
-rois=1 # perform the ROI analysis using the provided ROIs drawn on JHU-ICBM-FA-1mm.nii.gz
+rois=2.5 # perform the ROI analysis using the provided ROIs of 2.5 mm radius drawn on JHU-ICBM-FA-1mm.nii.gz
 template=1 #use the FSL's JHU-ICBM-FA-1mm.nii.gz as FA template or FSL's MNI template if the structural MRI data is provided. 
 skip=0 #perform all the steps of the pipeline. 
 eddy=1 #try to use eddy_cpu
@@ -65,7 +65,8 @@ print_usage() {
 	-d DENOISING [default = 1];  0=skip; 1=both denoise and unringing; 2=only denoise; 3=only unringing. \n\
 	-e EDDY [default = 1]; 0=skip eddy (not recommended); 1=use ${FSLDIR}/bin/eddy_cpu; 2=use ${FSLDIR}/bin/eddy; 3=use ${FSLDIR}/bin/eddy_correct; 
 				alternatively, the user can specify which eddy program to use (e.g., eddy_cuda). The binary file specified by the user must be located in ${FSLDIR}/bin/ (do not include \"${FSLDIR}/bin/\" in the command, just the name of the binary file)\n\
-	-r ROIS [default = 1]; 0=skip ROI analysis; 1=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
+	-r ROIS [default = 2.5]; 0=skip ROI analysis; 2.5=ROI analysis with provided ROIs drawn on JHU-ICBM-FA-1mm; 
+ 		alternatively, a positive number (non-integer numbers are acceptable, e.g., 2.5) that is the radius of the new sphere ROIs that you want to use for ALPS calculation. They will be generated on the default FSL's JHU/MNI 1mm template space and will be available in the output folder. 
 		alternatively, a comma-separated list of 4 custom ROI nifti files can be specified.
 		ROIs need to be in the following order: 1) LEFT and 2) RIGHT PROJECTION FIBERS (superior corona radiata), 3) LEFT and 4) RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)\n\
 	-t TEMPLATE [default = 1]; 0=ROI analysis in NATIVE space; 1=ROI analysis with FSL's JHU-ICBM-FA-1mm (if no structural MRI data input), MNI_T1_1mm (if structural data input is a T1) or JHU-ICBM-T2-1mm (if structural data input is a T2); \n\
@@ -135,10 +136,12 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 fi
 	#ROIS & TEMPLATE
 if [ "$rois" != "0" ]; then
-	if [ "$rois" == "1" ]; then
+	if [ "$rois" == "2.5" ]; then
 		echo "ROI analysis with default ROIs"
 		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz"
-	else
+  	if [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then
+		echo "ROI analysis with user-defined spheric ROIs with radius $rois mm" 	
+ 	else
 		echo "ROI analysis with user-defined ROIs: $rois"
 	fi
 	n_rois=`echo $rois | awk -F '[,]' '{print NF}'`
@@ -519,6 +522,24 @@ fi
 # 3. ROI ANALYSIS
 if [ "$rois" != "0" ]
 then
+	if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ] && [ "$template" != "0" ]; then 
+ 		for r in "$rois"; do 
+   			cp "$r" "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz"; 
+      		done
+		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+  	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then #generate spheric ROIs in template space
+   		fslmaths "${template}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+  		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+    		rois="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz","${outdir}/R_SCR_in_${template_abbreviation}.nii.gz","${outdir}/L_SLF_in_${template_abbreviation}.nii.gz","${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
+      		proj_L="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz"
+		proj_R="${outdir}/R_SCR_in_${template_abbreviation}.nii.gz"
+		assoc_L="${outdir}/L_SLF_in_${template_abbreviation}.nii.gz"
+		assoc_R="${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
+    	fi
 	#ROIs
 	echo "starting ROI analysis with projection fibers "$(basename "$proj_L")" (LEFT) and "$(basename "$proj_R")" (RIGHT), and association fibers "$(basename "$assoc_L")" (LEFT) and "$(basename "$assoc_R")" (RIGHT)"
 	#TEMPLATE
@@ -629,7 +650,7 @@ then
 		dzz="${outdir}/dzz.nii.gz"
   		fa="${outdir}/dti_FA.nii.gz"
 	 	md="${outdir}/dti_MD.nii.gz"
-  		if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ]; then
+  		#if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ]; then
     			template=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz
 			template_abbreviation=JHU-FA
     			flirt -ref "${outdir}/dti_FA.nii.gz" -in "${template}" -out "${outdir}/dti_FA_${template_abbreviation}_to_native.nii.gz" -omat "${outdir}/${template_abbreviation}_to_native.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
@@ -640,7 +661,7 @@ then
      			proj_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f2)" .nii.gz)"_native.nii.gz
 			assoc_L=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f3)" .nii.gz)"_native.nii.gz
    			assoc_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f4)" .nii.gz)"_native.nii.gz
-	  	fi
+	  	#fi
 	fi
 
 	
