@@ -526,7 +526,7 @@ then
  		for r in "$rois"; do 
    			cp "$r" "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz"; 
       		done
-		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then #generate spheric ROIs in template space
    		fslmaths "${template}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
 		fslmaths "${template}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
