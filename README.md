@@ -2,7 +2,7 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
-As of 2024-02-03, there is a new option (-f) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
+As of 2024-02-03, there is a new option (```-f```) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
 The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
 If you use this script, please cite our work AND report the link to this repository: 
