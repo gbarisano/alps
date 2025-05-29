@@ -2,14 +2,20 @@
 
 This is a ```bash``` script that automatically computes the diffusion along perivascular spaces (ALPS) metric from diffusion-weighted images (```dwi```).   
 The ALPS index has been described by [Taoka et al. (Japanese Journal of Radiology, 2017)](https://link.springer.com/article/10.1007/s11604-017-0617-z)  
-As of 2024-02-03, there is a new option (```-f```) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
-The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
 If you use this script, please cite our work AND report the link to this repository: 
 - Paper: [Liu, X, Barisano, G, et al., Cross-Vendor Test-Retest Validation of Diffusion Tensor Image Analysis along the Perivascular Space (DTI-ALPS) for Evaluating Glymphatic System Function, Aging and Disease (2023)](http://www.aginganddisease.org/EN/10.14336/AD.2023.0321-2). DOI: https://doi.org/10.14336/AD.2023.0321-2
 - Link to this repository: https://github.com/gbarisano/alps/
 
 If you have any question, please contact me: barisano [at] stanford [dot] edu.
+
+## UPDATES: 
+- 2025-05-28: there are three changes:
+  1) the default ROIs were changed from spheres with radius 5 mm to spheres with radius 2.5 mm to better reflect what originally described by [Taoka et al.](https://link.springer.com/article/10.1007/s11604-017-0617-z). 
+  2) the output folder now includes the individual ROI files as well as a combined ROI files (all_ROIs.nii.gz) to make it easier to QC your data. 
+  3) the ```-r``` option now allows you to specify a positive number (non-integer numbers are acceptable values, e.g., 2.5) that is the radius of the new sphere ROIs that you want to use for ALPS calculation. They will be generated on the default FSL's JHU/MNI 1mm template space. If you don't specify the ```-r``` option in your command, the default behavior will use the new default ROIs (i.e., spheres with radius 2.5 mm)
+- 2024-02-03: there is a new option (```-f```) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
+The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
 ## Table of contents
 - [Required libraries](#required-libraries)
@@ -62,11 +68,12 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ```${FSLDIR}/bin/``` (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file).
   - ```-r```: Region of interest (ROI) analysis [default = 1]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
-    - 1 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz```:
+    - 2.5 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz``` as spheres with 2.5 mm radius:
       - ```L_SCR.nii.gz``` LEFT PROJECTION FIBERS (superior corona radiata)
       - ```R_SCR.nii.gz``` RIGHT PROJECTION FIBERS (superior corona radiata)
       - ```L_SLF.nii.gz``` LEFT ASSOCIATION FIBERS (superior longitudinal fasciculus)
       - ```R_SLF.nii.gz``` RIGHT ASSOCIATION FIBERS (superior longitudinal fasciculus)
+    - alternatively, the user can specify a positive number (non-integer numbers are acceptable values, e.g., 2.5) and this will generate spheric ROIs with radius corresponding to the input value. The ROIs will still be on the FSL's JHU/MNI 1mm template space and will be available in the output folder as individual ROIs files as well as a single combined ROI file (all_ROIs.nii.gz).
     - alternatively, the user can specify a COMMA-SEPARATED list of 4 custom ROIs (```NIfTI``` binary masks), which MUST be in the following order: 
       1. ```LEFT``` PROJECTION FIBERS (superior corona radiata)
       2. ```RIGHT``` PROJECTION FIBERS (superior corona radiata)
@@ -97,6 +104,7 @@ If ```-s 1```, then ```-o``` MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER W
 - The main output is a ```csv``` file named ```alps.csv``` located in ```alps.stat``` folder in the output directory. This file includes the ```id``` (based on the ```-a``` input), the scanner manufacturer (based on the ```-m``` input), and the metrics required to compute the ALPS index, separately for the left and right side: 
  $$ALPS=mean(Dxproj,Dxassoc)/mean(Dyproj,Dzassoc)$$
 The last column named ```alps``` is the average of the ALPS index on the left and right side.
+- UPDATE 05-28-2025: the ROIs files will be available in the output folder to facilitate QC. Both individual files for each ROI and a single files with all the ROIs combined (all_ROIs.nii.gz) will be available. 
 - UPDATE 09-11-2024: an additional ```csv``` file named ```fa+md_alps.csv``` located in ```alps.stat``` folder in the output directory is generated. This file includes the same ```id``` header as the main output ```alps.csv``` and the fractional anisotrophy (FA) and mean diffusivity (MD) measured in the same exact ROIs used for the ALPS index, on both sides. The last 2 columns are the average measures of the FA and MD on the left and right side of the projection fibers and the left and right side of the association fibers.
 - DTI FITTING outputs: these ```.nii.gz``` files are the outputs from the FSL command ```dtifit``` and their names start with ```dti_```
 - ALPS tensor files: ```dxx.nii.gz```,```dyy.nii.gz```, and ```dzz.nii.gz``` are the tensor files used for the calculation of the ALPS index. If the analysis is done on a template space, the corresponding files transformed to the template space will be also output.
