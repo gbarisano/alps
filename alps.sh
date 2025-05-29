@@ -533,10 +533,11 @@ then
       		done
 		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   	else #generate spheric ROIs in template space
-   		fslmaths "${template}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
+   		if [ "${template}" == "0" ]; then template_roi=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz; template_abbreviation=JHU-FA; else template_roi="${template}"; fi
+   		fslmaths "${template_roi}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template_roi}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template_roi}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template_roi}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
 		fslmaths "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
     	fi
