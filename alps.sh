@@ -118,6 +118,20 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 	if [ ! -f "${dwi1}" ]; then echo "ERROR! input $dwi1 does not exist."; exit 1; fi
 	if [ ! -f "${bval1}" ]; then echo "ERROR! bval file $bval1 does not exist."; exit 1; fi
 	if [ ! -f "${bvec1}" ]; then echo "ERROR! bvec file $bvec1 does not exist."; exit 1; fi
+ 	#OUTPUT ALPS CHECK
+	if [ -f "${outdir}/alps.stat/alps.csv" ] && [ ! -z "`tail -n 1 "${outdir}/alps.stat/alps.csv" | tr -d ,`" ]; then echo "ERROR! Final output alps.csv already exists and is not empty! Remove/rename the output folder in order to re-run the pipeline with input $dwi1"; exit 1; fi;
+ 	# create output directory
+	if [ ! $output_dir_name ]; then 
+		#study_folder="$(dirname "${dwi1}")"
+		study_folder=`echo "$(cd "$(dirname -- "${dwi1}")" >/dev/null; pwd -P)"`
+		outdir="${study_folder}/alps"
+	else
+		outdir="${output_dir_name}"
+	fi
+	echo "create output directory: ${outdir}"
+	mkdir -p "${outdir}"
+ 	exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
+  
 	#if [ ! $json1 ]; then echo "ERROR! metadata .json file (-m) is not defined."; print_usage; exit 1; fi
  	#CHECK FOR DWI2. Hashtagged, because: 
   		#bvec2 is not used, 
@@ -133,6 +147,10 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 		#if [ ! -f "${bvec2}" ]; then echo "ERROR! bvec file $bvec2 of second input does not exist."; exit 1; fi;
 		if [ $json2 ]; then if [ ! -f "${json2}" ]; then echo "ERROR! metadata .json file $json2 of second input does not exist."; exit 1; fi; fi;
 	fi
+elif [ $skip -eq 1 ]; then
+	if [ ! $output_dir_name ]; then echo "ERROR! Option -s is set to 1, therefore option -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED."; exit 1; fi;
+ 	outdir="${output_dir_name}"
+  	exec > "${outdir}"/alps_$(date +"%Y-%m-%d_%H-%M-%S")_log.txt 2>&1
 fi
 	#ROIS & TEMPLATE
 if [ "$rois" != "0" ]; then
@@ -233,19 +251,8 @@ echo -e "Running ALPS with the following parameters: \n
 
 # 1. PREPROCESSING (Denoising, unringing, Topup for Opposite EPI acquisitions, Eddy)
 if [ $skip -eq 0 ]; then
-	# create output directory and copy bval and bvec files
-	if [ ! $output_dir_name ]; then 
-		#study_folder="$(dirname "${dwi1}")"
-		study_folder=`echo "$(cd "$(dirname -- "${dwi1}")" >/dev/null; pwd -P)"`
-		outdir="${study_folder}/alps"
-	else
-		outdir="${output_dir_name}"
-	fi
-	#OUTPUT ALPS CHECK
-	if [ -f "${outdir}/alps.stat/alps.csv" ] && [ ! -z "`tail -n 1 "${outdir}/alps.stat/alps.csv" | tr -d ,`" ]; then echo "ERROR! Final output alps.csv already exists and is not empty! Remove/rename the output folder in order to re-run the pipeline with input $dwi1"; exit 1; fi;
-	
-	echo "create output directory: ${outdir}"
-	mkdir -p "${outdir}"
+
+ 	#copy bval and bvec files into output directory
 	cp "$bvec1" "${outdir}/bvec1"
 	cp "$bval1" "${outdir}/bval1"
 	cd "${outdir}"
@@ -513,9 +520,7 @@ if [ $skip -eq 0 ]; then
 	#cp "${outdir}/vol0003.nii.gz" "${outdir}/dyy.nii.gz" 
 	#cp "${outdir}/vol0005.nii.gz" "${outdir}/dzz.nii.gz"
 elif [ $skip -eq 1 ]; then
-	if [ ! $output_dir_name ]; then echo "ERROR! Option -s is set to 1, therefore option -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED."; exit 1; fi;
-	echo "Preprocessing and DTI fitting skipped by the user (-s 1 option). ONLY ROI ANALYSIS IS PERFORMED. Checking all required inputs are available..."
-	outdir="${output_dir_name}"
+	echo "Preprocessing and DTI fitting skipped by the user (-s 1 option). ONLY ROI ANALYSIS IS PERFORMED. Checking all required inputs are available..."	
 	if [ -f "${outdir}/alps.stat/alps.csv" ] && [ ! -z "`tail -n 1 "${outdir}/alps.stat/alps.csv" | tr -d ,`" ]; then echo "ERROR! Final output alps.csv already exists and is not empty! Remove/rename the "alps.stat" folder or the "alps.stat/alps.csv" file in order to run the ROI analysis only (-s 1) in ${outdir}"; exit 1; fi;
 	if [ -f "${outdir}/dti_FA.nii.gz" ]; then echo "dti_FA.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dti_FA.nii.gz, needed for ROI analysis. Double check that ${outdir}/dti_FA.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
  	if [ -f "${outdir}/dti_tensor.nii.gz" ]; then echo "dti_tensor.nii.gz is available for ROI analysis"; else echo "ERROR! Cannot find ${outdir}/dti_tensor.nii.gz, needed for ROI analysis. Double check that ${outdir}/dti_tensor.nii.gz exists; if it does not exist, consider running the whole alps script (-s 0, default option)"; exit 1; fi
@@ -661,12 +666,14 @@ then
 			template_abbreviation=JHU-FA
     			flirt -ref "${outdir}/dti_FA.nii.gz" -in "${template}" -out "${outdir}/dti_FA_${template_abbreviation}_to_native.nii.gz" -omat "${outdir}/${template_abbreviation}_to_native.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
        			for r in $(echo $rois | tr -s ',' ' '); do
-	  			flirt -in "${r}" -ref "${outdir}/dti_FA.nii.gz" -out "${outdir}/$(basename ${r} .nii.gz)_native.nii.gz" -init "${outdir}/${template_abbreviation}_to_native.mat" -applyxfm -interp nearestneighbour
+	  			flirt -in "${r}" -ref "${outdir}/dti_FA.nii.gz" -out "${outdir}/"$(basename "$(basename "$(basename "$r" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz" -init "${outdir}/${template_abbreviation}_to_native.mat" -applyxfm -interp nearestneighbour
       			done
-	  		proj_L=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f1)" .nii.gz)"_native.nii.gz
-     			proj_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f2)" .nii.gz)"_native.nii.gz
-			assoc_L=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f3)" .nii.gz)"_native.nii.gz
-   			assoc_R=${outdir}/"$(basename "$(echo "${rois}" | cut -d ',' -f4)" .nii.gz)"_native.nii.gz
+	  		proj_L=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f1)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
+     			proj_R=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f2)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
+			assoc_L=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f3)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
+   			assoc_R=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f4)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
+      			fslmaths "${proj_L}" -add "${proj_R}" -add "${assoc_L}" -add "${assoc_R}" -bin "${outdir}/all_ROIs_native.nii.gz"
+  			cluster -t 1 -i "${outdir}/all_ROIs_native.nii.gz" -o "${outdir}/all_ROIs_native.nii.gz"
 	  	#fi
 	fi
 
