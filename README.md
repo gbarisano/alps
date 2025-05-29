@@ -13,7 +13,7 @@ If you have any question, please contact me: barisano [at] stanford [dot] edu.
 - 2025-05-28: there are three changes:
   1) the default ROIs were changed from spheres with radius 5 mm to spheres with radius 2.5 mm to better reflect what originally described by [Taoka et al.](https://link.springer.com/article/10.1007/s11604-017-0617-z). 
   2) the output folder now includes the individual ROI files as well as a combined ROI files (all_ROIs.nii.gz) to make it easier to QC your data. 
-  3) the ```-r``` option now allows you to specify a positive number (non-integer numbers are acceptable values, e.g., 2.5) that is the radius of the new sphere ROIs that you want to use for ALPS calculation. They will be generated on the default FSL's JHU/MNI 1mm template space. If you don't specify the ```-r``` option in your command, the default behavior will use the new default ROIs (i.e., spheres with radius 2.5 mm)
+  3) the ```-r``` option now allows you to specify a positive number (non-integer numbers are acceptable values, e.g., 2.5) that is the radius of the new sphere ROIs that you want to use for ALPS calculation. They will be generated on the default FSL's JHU/MNI 1mm template space and will be available in the output folder. If you don't specify the ```-r``` option in your command, the default behavior will use the new default ROIs (i.e., spheres with radius 2.5 mm)
 - 2024-02-03: there is a new option (```-f```) to specify whether the transformation of the tensors to the template space should be performed with FSL flirt/applywarp (default option) or with the FSL function [```vecreg```](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#vecreg_-_Registration_of_vector_images), as suggested in PMIDs [36472803](https://pubmed.ncbi.nlm.nih.gov/36472803/) and [37162692](https://pubmed.ncbi.nlm.nih.gov/37162692/).
 The default option remains flirt/applywarp, because according to my data, the ALPS index seems to be more robust this way.
 
@@ -66,7 +66,7 @@ To correct for susceptibility-induced distortions, the user must define the foll
     - 2 = use ```${FSLDIR}/bin/eddy``` (should take ~7 hours to run, for most inputs);
     - 3 = use  ```${FSLDIR}/bin/eddy_correct``` (does not require a metadata file)
     - alternatively, the user can specify which eddy program to use (e.g., ```eddy_cuda```). The binary file specified by the user must be located in ```${FSLDIR}/bin/``` (do not include "${FSLDIR}/bin/" in the command, just the name of the binary file).
-  - ```-r```: Region of interest (ROI) analysis [default = 1]
+  - ```-r```: Region of interest (ROI) analysis [default = 2.5]
     - 0 = skip ROI analysis (the output ```csv``` file with ALPS index will NOT be generated)
     - 2.5 [default] = ROI analysis done using the provided ROIs drawn on FSL's ```JHU-ICBM-FA-1mm.nii.gz``` as spheres with 2.5 mm radius:
       - ```L_SCR.nii.gz``` LEFT PROJECTION FIBERS (superior corona radiata)
