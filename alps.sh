@@ -139,12 +139,15 @@ if [ "$rois" != "0" ]; then
 	if [ "$rois" == "2.5" ]; then
 		echo "ROI analysis with default ROIs"
 		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz"
+  		roption=$rois
   	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then
    		radius=$rois
 		echo "ROI analysis with user-defined spheric ROIs with radius $radius mm"
   		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" #only needed to pass the check below
+    		roption=$radius
  	else
 		echo "ROI analysis with user-defined ROIs: $rois"
+  		roption=$rois
 	fi
 	n_rois=`echo $rois | awk -F '[,]' '{print NF}'`
 	if [ $n_rois -ne 4 ]; then echo "ERROR! The number of ROIs is not equal to 4. The string of ROIs must include only 4 elements separated by 3 commas. Please double check that exactly 4 elements and no more than 3 commas are present in your string of ROIs (e.g., no commas is present in file/directory names."; exit 1; fi;
@@ -218,7 +221,7 @@ echo -e "Running ALPS with the following parameters: \n
 -n $json2 \n
 -d $denoise \n
 -e $eddy \n
--r $rois \n
+-r $roption \n
 -t $template \n
 -v $struct \n
 -h $weight \n
