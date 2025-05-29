@@ -139,8 +139,10 @@ if [ "$rois" != "0" ]; then
 	if [ "$rois" == "2.5" ]; then
 		echo "ROI analysis with default ROIs"
 		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz"
-  	if [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then
-		echo "ROI analysis with user-defined spheric ROIs with radius $rois mm" 	
+  	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then
+   		radius=$rois
+		echo "ROI analysis with user-defined spheric ROIs with radius $radius mm"
+  		rois="${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" #only needed to pass the check below
  	else
 		echo "ROI analysis with user-defined ROIs: $rois"
 	fi
@@ -522,24 +524,24 @@ fi
 # 3. ROI ANALYSIS
 if [ "$rois" != "0" ]
 then
-	if [ "$rois" == "${script_folder}/ROIs_JHU_ALPS/L_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SCR.nii.gz,${script_folder}/ROIs_JHU_ALPS/L_SLF.nii.gz,${script_folder}/ROIs_JHU_ALPS/R_SLF.nii.gz" ] && [ "$template" != "0" ]; then 
- 		for r in "$rois"; do 
+	if [ -z $radius ]; then 
+ 		for r in $(echo $rois | tr -s ',' ' '); do 
    			cp "$r" "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz"; 
       		done
 		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
-  	elif [[ "$rois" =~ ^([0-9]*\.[0-9]+|[0-9]+)$ ]]; then #generate spheric ROIs in template space
-   		fslmaths "${template}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
-		fslmaths "${template}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $rois -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
+  	else #generate spheric ROIs in template space
+   		fslmaths "${template}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 64 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
+		fslmaths "${template}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
 		fslmaths "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
-    		rois="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz","${outdir}/R_SCR_in_${template_abbreviation}.nii.gz","${outdir}/L_SLF_in_${template_abbreviation}.nii.gz","${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
-      		proj_L="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz"
-		proj_R="${outdir}/R_SCR_in_${template_abbreviation}.nii.gz"
-		assoc_L="${outdir}/L_SLF_in_${template_abbreviation}.nii.gz"
-		assoc_R="${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
     	fi
+     	rois="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz","${outdir}/R_SCR_in_${template_abbreviation}.nii.gz","${outdir}/L_SLF_in_${template_abbreviation}.nii.gz","${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
+	proj_L="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz"
+	proj_R="${outdir}/R_SCR_in_${template_abbreviation}.nii.gz"
+	assoc_L="${outdir}/L_SLF_in_${template_abbreviation}.nii.gz"
+	assoc_R="${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
 	#ROIs
 	echo "starting ROI analysis with projection fibers "$(basename "$proj_L")" (LEFT) and "$(basename "$proj_R")" (RIGHT), and association fibers "$(basename "$assoc_L")" (LEFT) and "$(basename "$assoc_R")" (RIGHT)"
 	#TEMPLATE
