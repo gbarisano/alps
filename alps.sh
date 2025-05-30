@@ -144,9 +144,9 @@ if [ $skip -eq 0 ]; then #check the inputs only if are needed
 	#if [ $json2 ]; then if [ ! $dwi2 ] || [ ! $bval2 ] || [ ! $bvec2 ]; then echo "ERROR! metadata .json file (-n) of the second input is defined, but dwi2 (-i), bval (-j), and/or bvec (-k) of the second input is/are not defined."; print_usage; exit 1; fi; fi;
 	if [ $dwi2 ]; then 
 		if [ ! -f "${dwi2}" ]; then echo "ERROR! second input $dwi2 does not exist."; exit 1; fi;
-		if [ $bval2 ]; then if [ ! -f "${bval2}" ]; then echo "ERROR! bval file $bval2 of second input does not exist."; exit 1; fi; fi;
+		#if [ $bval2 ]; then if [ ! -f "${bval2}" ]; then echo "ERROR! bval file $bval2 of second input does not exist."; exit 1; fi; fi;
 		#if [ ! -f "${bvec2}" ]; then echo "ERROR! bvec file $bvec2 of second input does not exist."; exit 1; fi;
-		if [ $json2 ]; then if [ ! -f "${json2}" ]; then echo "ERROR! metadata .json file $json2 of second input does not exist."; exit 1; fi; fi;
+		#if [ $json2 ]; then if [ ! -f "${json2}" ]; then echo "ERROR! metadata .json file $json2 of second input does not exist."; exit 1; fi; fi;
 	fi
 elif [ $skip -eq 1 ]; then
 	if [ ! $output_dir_name ]; then echo "ERROR! Option -s is set to 1, therefore option -o MUST BE DEFINED and MUST CORRESPOND TO THE FOLDER WHERE dxx.nii.gz, dyy.nii.gz and dzz.nii.gz ARE LOCATED."; exit 1; fi;
