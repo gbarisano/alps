@@ -542,7 +542,7 @@ then
       			if [ $iteration -eq 1 ]; then 
 	 			cp "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
      			else 
-				fslmaths "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -add "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+				fslmaths "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -add "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
     			fi
       		done
 		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
