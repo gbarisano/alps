@@ -534,11 +534,19 @@ fi
 # 3. ROI ANALYSIS
 if [ "$rois" != "0" ]
 then
-	if [ -z $radius ]; then 
- 		for r in $(echo $rois | tr -s ',' ' '); do 
+	if [ -z $radius ]; then
+ 		iteration=0
+ 		for r in $(echo $rois | tr -s ',' ' '); do
+   			iteration=$((iteration+1)
    			cp "$r" "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz"; 
+      			if [ $iteration -eq 1 ]; then 
+	 			cp "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+     			else 
+				fslmaths "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -add "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+    			fi
       		done
-		cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+		#cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   	else #generate spheric ROIs in template space
    		if [ "${template}" == "0" ]; then template_roi=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz; template_abbreviation=JHU-FA; else template_roi="${template}"; fi
    		fslmaths "${template_roi}" -mul 0 -add 1 -roi 116 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -odt float
