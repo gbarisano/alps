@@ -599,50 +599,65 @@ then
 	   			vecreg -i "${outdir}/dti_tensor_in_struct.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/struct2template_warps"
 	      			fi
 		else
-			if [ "$warp" == "0" ]; then echo "Linear registration to template with flirt and default options";
-			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-   			flirt -in "${outdir}/dti_MD.nii.gz" -ref "${template}" -out "${outdir}/dti_MD_to_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with flirt";
-	      			flirt -in "${outdir}/dti_tensor.nii.gz" -ref "${template}" -out "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-		 		#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-				#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-				#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
-				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
-	   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-       				#vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-				#vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-				#vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
-				fi
-			elif [ "$warp" == "1" ]; then echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
-			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
-			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
-			--regmod=bending_energy --intmod=global_linear --refderiv=0
-			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
-	   			if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
-	      			applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
-				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-				#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-				#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
-    				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
-	   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
-       				fi
-			elif [ "$warp" == "2" ]; then echo "Linear (flirt) + Non-Linear (fnirt) registration to template";
-			flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -omat "${outdir}/FA_to_${template_abbreviation}_aff.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
-			fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--aff="${outdir}/FA_to_${template_abbreviation}_aff.mat" \
-			--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
-			--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
-			--regmod=bending_energy --intmod=global_linear --refderiv=0
-			applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
-   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
-   				if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
-       				applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
-       				#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
-				#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
-				#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
-    				elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
-   				vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
-				fi
+			if [ "$warp" == "0" ]; then 
+				if [ ! -f "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" ]; then 
+    					echo "Linear registration to template with flirt and default options";
+    					flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -out "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" -omat "${outdir}/FA_to_${template_abbreviation}.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12;
+   					flirt -in "${outdir}/dti_MD.nii.gz" -ref "${template}" -out "${outdir}/dti_MD_to_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm;
+				else echo "dti_FA registered to template exists and will NOT be overwritten: ${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"; fi
+				if [ ! -f "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" ]; then
+					if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with flirt";
+		      			flirt -in "${outdir}/dti_tensor.nii.gz" -ref "${template}" -out "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+			 		#flirt -in "${outdir}/dxx.nii.gz" -ref "${template}" -out "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+					#flirt -in "${outdir}/dyy.nii.gz" -ref "${template}" -out "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+					#flirt -in "${outdir}/dzz.nii.gz" -ref "${template}" -out "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -init "${outdir}/FA_to_${template_abbreviation}.mat" -applyxfm
+					elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+		   			vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+	       				#vecreg -i "${outdir}/dxx.nii.gz" -r "${template}" -o "${outdir}/dxx_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+					#vecreg -i "${outdir}/dyy.nii.gz" -r "${template}" -o "${outdir}/dyy_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+					#vecreg -i "${outdir}/dzz.nii.gz" -r "${template}" -o "${outdir}/dzz_in_${template_abbreviation}.nii.gz" -t "${outdir}/FA_to_${template_abbreviation}.mat"
+					fi
+     				else echo "dti_tensor registered to template exists and will NOT be overwritten: ${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"; fi
+			elif [ "$warp" == "1" ]; then
+   				if [ ! -f "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" ]; then 
+		   			echo "Non-Linear registration to template with fnirt and default options (cf. fsl/etc/flirtsch/FA_2_FMRIB58_1mm.cnf)";
+					fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
+					--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
+					--regmod=bending_energy --intmod=global_linear --refderiv=0
+					applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+		   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
+				else echo "dti_FA registered to template exists and will NOT be overwritten: ${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"; fi
+    				if [ ! -f "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" ]; then
+					if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
+					applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+					elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+					vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+					fi
+	     			else echo "dti_tensor registered to template exists and will NOT be overwritten: ${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"; fi
+			elif [ "$warp" == "2" ]; then
+   				if [ ! -f "${outdir}/dti_FA_to_${template_abbreviation}.nii.gz" ]; then 
+		   			echo "Linear (flirt) + Non-Linear (fnirt) registration to template";
+					flirt -in "${outdir}/dti_FA.nii.gz" -ref "${template}" -omat "${outdir}/FA_to_${template_abbreviation}_aff.mat" -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12
+					fnirt --in="${outdir}/dti_FA.nii.gz" --ref="${template}" ${template_mask}--aff="${outdir}/FA_to_${template_abbreviation}_aff.mat" \
+					--cout="${outdir}/FA_to_${template_abbreviation}_warps" --imprefm=1 --impinm=1 --imprefval=0 --impinval=0 --subsamp=8,4,2,2 \
+					--miter=5,5,5,5 --infwhm=12,6,2,2 --reffwhm=12,6,2,2 --lambda=300,75,30,30 --estint=1,1,1,0 --warpres=10,10,10 --ssqlambda=1 \
+					--regmod=bending_energy --intmod=global_linear --refderiv=0
+					applywarp --in="${outdir}/dti_FA.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"
+		   			applywarp --in="${outdir}/dti_MD.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_MD_to_${template_abbreviation}.nii.gz"
+				else echo "dti_FA registered to template exists and will NOT be overwritten: ${outdir}/dti_FA_to_${template_abbreviation}.nii.gz"; fi
+				if [ ! -f "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" ]; then
+     					if [ "$freg" == "1" ]; then echo "Transformation of the tensor to the template with applywarp";
+					applywarp --in="${outdir}/dti_tensor.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dxx.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dxx_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dyy.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dyy_in_${template_abbreviation}.nii.gz"
+					#applywarp --in="${outdir}/dzz.nii.gz" --ref="${template}" --warp="${outdir}/FA_to_${template_abbreviation}_warps" --out="${outdir}/dzz_in_${template_abbreviation}.nii.gz"
+					elif [ "$freg" == "2" ]; then echo "Transformation of the tensor to the template with vecreg";
+					vecreg -i "${outdir}/dti_tensor.nii.gz" -r "${template}" -o "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" -w "${outdir}/FA_to_${template_abbreviation}_warps"
+					fi
+     				else echo "dti_tensor registered to template exists and will NOT be overwritten: ${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz"; fi
 			fi
 		fi
    		fslroi "${outdir}/dti_tensor_in_${template_abbreviation}.nii.gz" "${outdir}/dxx_in_${template_abbreviation}.nii.gz" 0 1
