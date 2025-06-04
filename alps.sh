@@ -537,7 +537,7 @@ then
 	if [ -z $radius ]; then
  		iteration=0
  		for r in $(echo $rois | tr -s ',' ' '); do
-   			iteration=$((iteration+1)
+   			iteration=$((iteration+1))
    			cp "$r" "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz"; 
       			if [ $iteration -eq 1 ]; then 
 	 			cp "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
