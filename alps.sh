@@ -501,7 +501,12 @@ if [ $skip -eq 0 ]; then
 	# 2. FIT TENSOR
 	if [ -f "${outdir}/eddy_corrected_data.nii.gz" ]; then
 		echo "starting DTI FITTING on eddy corrected data"
-		dtifit --data=eddy_corrected_data.nii.gz --out=dti --mask=b0_brain_mask.nii.gz --bvecs=bvec1 --bvals=bval1 --save_tensor
+  		if [ -f "${outdir}/eddy_corrected_data.eddy_rotated_bvecs" ]; then
+    			echo "Using eddy_rotated_bvecs"
+  			dtifit --data=eddy_corrected_data.nii.gz --out=dti --mask=b0_brain_mask.nii.gz --bvecs=eddy_corrected_data.eddy_rotated_bvecs --bvals=bval1 --save_tensor
+     		else
+       			dtifit --data=eddy_corrected_data.nii.gz --out=dti --mask=b0_brain_mask.nii.gz --bvecs=bvec1 --bvals=bval1 --save_tensor
+	  	fi
 	else
 		if [ -f "${dwi1_processed}" ]; then
 			fslroi "$dwi1_processed" "${outdir}/b0" 0 1
