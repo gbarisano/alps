@@ -158,7 +158,13 @@ This command will preprocess ```my_4D_dwi.nii.gz``` (denoising and unringing, i.
 
 
 <p align="center">
-  <a href="https://mapmyvisitors.com/web/1bzax">
-     <img width="200"  src="https://mapmyvisitors.com/map.png?cl=ffffff&w=a&t=n&d=42WqeykSXznN_NSaBlpf6CtSXQxhqmIs6QusUsguFdY" />
+  <a href="https://clustrmaps.com/site/1c7wt">
+     <img width="200"  src="https://www.clustrmaps.com/map_v2.png?d=GLfQ48l3e9FF-dyB-5IiIrAstKYqCsTzxPU5gxINVcs&cl=ffffff" />
+   </a>
+</p>
+
+<p align="center">
+  <a href="#">
+      <img src="https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fgbarisano%2Falps&countColor=%2337d67a" />
    </a>
 </p>
