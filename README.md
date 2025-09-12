@@ -157,4 +157,4 @@ This command will perform ONLY eddy current correction on the RAW ```dwi``` inpu
 This command will preprocess ```my_4D_dwi.nii.gz``` (denoising and unringing, i.e. default option ```-d```) and compute the ALPS index using the provided default ROIs on FSL template ```JHU-ICBM-FA-1mm.nii.gz```. Eddy current correction will be applied only if the user specifies the option ```-e 3``` (i.e., using ```${FSLDIR}/bin/eddy_correct```). If ```-e 3``` is not specified, no eddy current correction will be performed, which is not recommended.
 
 
-
+<script type="text/javascript" id="mapmyvisitors" src="//mapmyvisitors.com/map.js?d=E6DOM1NcbS_wEH7YpIdFMBPmOyGOjqfSmwAI1KRxNHw&cl=ffffff&w=a"></script>
