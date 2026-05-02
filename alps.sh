@@ -550,7 +550,7 @@ then
 				fslmaths "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -add "${outdir}/"$(basename "$(basename "$r" .gz)" .nii)"_in_${template_abbreviation}.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
     			fi
       		done
-		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+		fsl-cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
 		#cp "${script_folder}/ROIs_JHU_ALPS/all_ROIs.nii.gz" "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
   	else #generate spheric ROIs in template space
    		if [ "${template}" == "0" ]; then template_roi=${FSLDIR}/data/atlases/JHU/JHU-ICBM-FA-1mm.nii.gz; template_abbreviation=JHU-FA; else template_roi="${template}"; fi
@@ -559,7 +559,7 @@ then
 		fslmaths "${template_roi}" -mul 0 -add 1 -roi 128 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -odt float
 		fslmaths "${template_roi}" -mul 0 -add 1 -roi 52 1 110 1 99 1 0 1 -kernel sphere $radius -fmean -bin "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -odt float
 		fslmaths "${outdir}/L_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SCR_in_${template_abbreviation}.nii.gz" -add "${outdir}/L_SLF_in_${template_abbreviation}.nii.gz" -add "${outdir}/R_SLF_in_${template_abbreviation}.nii.gz" -bin "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
-  		cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
+  		fsl-cluster -t 1 -i "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz" -o "${outdir}/all_ROIs_in_${template_abbreviation}.nii.gz"
     	fi
      	rois="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz","${outdir}/R_SCR_in_${template_abbreviation}.nii.gz","${outdir}/L_SLF_in_${template_abbreviation}.nii.gz","${outdir}/R_SLF_in_${template_abbreviation}.nii.gz"
 	proj_L="${outdir}/L_SCR_in_${template_abbreviation}.nii.gz"
@@ -703,7 +703,7 @@ then
 			assoc_L=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f3)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
    			assoc_R=${outdir}/"$(basename "$(basename "$(basename "$(echo "${rois}" | cut -d ',' -f4)" .gz)" .nii)" _in_${template_abbreviation})"_native.nii.gz
       			fslmaths "${proj_L}" -add "${proj_R}" -add "${assoc_L}" -add "${assoc_R}" -bin "${outdir}/all_ROIs_native.nii.gz"
-  			cluster -t 1 -i "${outdir}/all_ROIs_native.nii.gz" -o "${outdir}/all_ROIs_native.nii.gz"
+  			fsl-cluster -t 1 -i "${outdir}/all_ROIs_native.nii.gz" -o "${outdir}/all_ROIs_native.nii.gz"
 	  	#fi
 	fi
 
